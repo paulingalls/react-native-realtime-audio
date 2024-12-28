@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "realtime-audio": ["../src/index"],
+      "realtime-audio/*": ["../src/*"]
+    }
+  }
+}
