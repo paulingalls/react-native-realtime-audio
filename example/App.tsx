@@ -1,7 +1,7 @@
 import { useEvent } from "expo";
 import RealtimeAudio, { RealtimeAudioView, RealtimeAudioViewRef } from "realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import OpenAI from "openai-react-native";
 
 const client = new OpenAI({

@@ -13,6 +13,8 @@ class RealtimeAudioPlayer {
     private let outputFormat: AVAudioFormat
     private let audioConverter: AVAudioConverter
     private var bufferQueue: [AVAudioPCMBuffer] = []
+    private var currentInputBuffer: AVAudioPCMBuffer?
+    private var currentInputBufferOffset: UInt32 = 0
     private var isPlaying = false {
         didSet {
             if isPlaying != oldValue {
@@ -24,7 +26,6 @@ class RealtimeAudioPlayer {
             }
         }
     }
-    private let playbackQueue = DispatchQueue(label: "com.audioplayback.queue")
     
     weak var delegate: RealtimeAudioPlayerDelegate?
     
@@ -38,6 +39,8 @@ class RealtimeAudioPlayer {
         }
         self.inputFormat = inputFormat
         self.outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
+        print("inputFormat: \(self.inputFormat.sampleRate), \(self.inputFormat.channelCount), \(self.inputFormat.isInterleaved), \(self.inputFormat.isStandard)")
+        print("outputFormat: \(self.outputFormat.sampleRate), \(self.outputFormat.channelCount), \(self.outputFormat.isInterleaved), \(self.outputFormat.isStandard)")
         self.audioConverter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)!
         setupAudioEngine()
     }
@@ -61,10 +64,9 @@ class RealtimeAudioPlayer {
         
         do {
             let buffer = try createBuffer(from: data)
-            playbackQueue.async { [weak self] in
-                self?.bufferQueue.append(buffer)
-                self?.checkAndStartPlayback()
-            }
+            
+            bufferQueue.append(buffer)
+            checkAndStartPlayback()
         } catch {
             print("Error creating buffer: \(error.localizedDescription)")
         }
@@ -99,19 +101,42 @@ class RealtimeAudioPlayer {
             return
         }
         
-        let inputBuffer = bufferQueue.removeFirst()
-        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: inputBuffer.frameLength)!
+        if currentInputBuffer == nil {
+            currentInputBuffer = bufferQueue.removeFirst()
+            currentInputBufferOffset = 0
+        }
+        
+        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: currentInputBuffer!.frameLength)!
         
         var error: NSError?
-        audioConverter.convert(to: outputBuffer, error: &error) { inNumPackets, outStatus in
+        audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, outStatus in
+            let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferOffset
+            let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
+            
+            let tempBuffer = AVAudioPCMBuffer(pcmFormat: self.currentInputBuffer!.format,
+                                              frameCapacity: samplesToCopy)!
+            tempBuffer.frameLength = samplesToCopy
+            
+            let bytesPerFrame = self.currentInputBuffer!.format.streamDescription.pointee.mBytesPerFrame
+            let sourceOffset = self.currentInputBufferOffset * UInt32(bytesPerFrame)
+            let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
+            let destData = tempBuffer.audioBufferList.pointee.mBuffers
+            
+            destData.mData?.copyMemory(from: sourceData.mData!.advanced(by: Int(sourceOffset)),
+                                     byteCount: Int(samplesToCopy * bytesPerFrame))
+            
+            self.currentInputBufferOffset += samplesToCopy
+            
+            if samplesToCopy < numSamplesNeeded {
+                self.currentInputBuffer = self.bufferQueue.removeFirst()
+                self.currentInputBufferOffset = 0
+            }
             outStatus.pointee = .haveData
-            return inputBuffer
+            return tempBuffer
         }
 
         playerNode.scheduleBuffer(outputBuffer, at: nil) { [weak self] in
-            self?.playbackQueue.async {
-                self?.startPlayingNextBuffer()
-            }
+            self?.startPlayingNextBuffer()
         }
         
         if !playerNode.isPlaying {
@@ -120,28 +145,21 @@ class RealtimeAudioPlayer {
     }
     
     func stop() {
-        playbackQueue.async { [weak self] in
-            self?.playerNode.stop()
-            self?.bufferQueue.removeAll()
-            self?.isPlaying = false
-        }
+        playerNode.stop()
+        bufferQueue.removeAll()
+        isPlaying = false
     }
     
     func pause() {
-        playbackQueue.async { [weak self] in
-            self?.playerNode.pause()
-            self?.isPlaying = false
-        }
+        playerNode.pause()
+        isPlaying = false
     }
     
     func resume() {
-        playbackQueue.async { [weak self] in
-            guard let self = self else { return }
-            if !bufferQueue.isEmpty {
-                self.isPlaying = true
-                if !self.playerNode.isPlaying {
-                    self.startPlayingNextBuffer()
-                }
+        if !bufferQueue.isEmpty {
+            isPlaying = true
+            if !playerNode.isPlaying {
+                startPlayingNextBuffer()
             }
         }
     }

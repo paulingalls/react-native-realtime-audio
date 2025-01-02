@@ -6,9 +6,9 @@
   "main": "build/index.js",
   "devDependencies": {
     "@types/react": "~18.3.12",
-    "expo-module-scripts": "^4.0.2",
-    "expo": "~52.0.0",
-    "react-native": "0.76.0"
+    "expo-module-scripts": "4.0.2",
+    "expo": "52.0.23",
+    "react-native": "0.76.5"
   },
   "peerDependencies": {
     "expo": "*",
