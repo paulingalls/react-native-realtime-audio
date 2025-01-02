@@ -14,7 +14,7 @@ class RealtimeAudioPlayer {
     private let audioConverter: AVAudioConverter
     private var bufferQueue: [AVAudioPCMBuffer] = []
     private var currentInputBuffer: AVAudioPCMBuffer?
-    private var currentInputBufferOffset: UInt32 = 0
+    private var currentInputBufferSampleOffset: UInt32 = 0
     private var isPlaying = false {
         didSet {
             if isPlaying != oldValue {
@@ -38,9 +38,8 @@ class RealtimeAudioPlayer {
             return nil
         }
         self.inputFormat = inputFormat
-        self.outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
-        print("inputFormat: \(self.inputFormat.sampleRate), \(self.inputFormat.channelCount), \(self.inputFormat.isInterleaved), \(self.inputFormat.isStandard)")
-        print("outputFormat: \(self.outputFormat.sampleRate), \(self.outputFormat.channelCount), \(self.outputFormat.isInterleaved), \(self.outputFormat.isStandard)")
+        let outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
+        self.outputFormat = AVAudioFormat(commonFormat: outputFormat.commonFormat, sampleRate: 48000, channels: outputFormat.channelCount, interleaved: outputFormat.isInterleaved)!
         self.audioConverter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)!
         setupAudioEngine()
     }
@@ -96,42 +95,54 @@ class RealtimeAudioPlayer {
     }
     
     private func startPlayingNextBuffer() {
-        guard !bufferQueue.isEmpty else {
-            isPlaying = false
-            return
-        }
-        
         if currentInputBuffer == nil {
+            if bufferQueue.isEmpty {
+                isPlaying = false
+                return;
+            }
             currentInputBuffer = bufferQueue.removeFirst()
-            currentInputBufferOffset = 0
+            currentInputBufferSampleOffset = 0
         }
         
-        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: currentInputBuffer!.frameLength)!
+        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: 4096)!
         
         var error: NSError?
-        audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, outStatus in
-            let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferOffset
+        let outputStatus = audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
+            let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
             let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
             
             let tempBuffer = AVAudioPCMBuffer(pcmFormat: self.currentInputBuffer!.format,
-                                              frameCapacity: samplesToCopy)!
-            tempBuffer.frameLength = samplesToCopy
+                                              frameCapacity: numSamplesNeeded)!
+            tempBuffer.frameLength = numSamplesNeeded
             
             let bytesPerFrame = self.currentInputBuffer!.format.streamDescription.pointee.mBytesPerFrame
-            let sourceOffset = self.currentInputBufferOffset * UInt32(bytesPerFrame)
+            let sourceOffset = self.currentInputBufferSampleOffset * bytesPerFrame
             let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
             let destData = tempBuffer.audioBufferList.pointee.mBuffers
             
             destData.mData?.copyMemory(from: sourceData.mData!.advanced(by: Int(sourceOffset)),
                                      byteCount: Int(samplesToCopy * bytesPerFrame))
             
-            self.currentInputBufferOffset += samplesToCopy
+            self.currentInputBufferSampleOffset += samplesToCopy
             
             if samplesToCopy < numSamplesNeeded {
+                self.currentInputBufferSampleOffset = 0
+                if self.bufferQueue.isEmpty {
+                    self.currentInputBuffer = nil
+                    inputStatus.pointee = .endOfStream
+                    tempBuffer.frameLength = samplesToCopy
+                    self.isPlaying = false
+                    return tempBuffer
+                }
                 self.currentInputBuffer = self.bufferQueue.removeFirst()
-                self.currentInputBufferOffset = 0
+                
+                let samplesRemaining = numSamplesNeeded - samplesToCopy
+                let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
+                destData.mData?.advanced(by: Int(samplesToCopy * bytesPerFrame)).copyMemory(from: sourceData.mData!,
+                                                                                            byteCount: Int(samplesRemaining * bytesPerFrame))
+                self.currentInputBufferSampleOffset += samplesRemaining
             }
-            outStatus.pointee = .haveData
+            inputStatus.pointee = .haveData
             return tempBuffer
         }
 
