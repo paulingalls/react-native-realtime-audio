@@ -10,13 +10,15 @@
   },
   "dependencies": {
     "expo": "~52.0.23",
+    "openai-react-native": "^0.3.6",
     "react": "18.3.1",
-    "react-native": "0.76.5"
+    "react-native": "0.76.5",
+    "react-native-sse": "^1.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.2"
   },
   "private": true,
   "expo": {

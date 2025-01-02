@@ -16,7 +16,7 @@ public class RealtimeAudioModule: Module {
     ])
 
     // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    Events("onPlaybackStarted", "onPlaybackStopped")
 
     // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
@@ -35,14 +35,33 @@ public class RealtimeAudioModule: Module {
     // Enables the module to be used as a native view. Definition components that are accepted as part of the
     // view definition: Prop, Events.
     View(RealtimeAudioView.self) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { (view: RealtimeAudioView, url: URL) in
-        if view.webView.url != url {
-          view.webView.load(URLRequest(url: url))
-        }
-      }
+        Events("onPlaybackStart", "onPlaybackStop")
 
-      Events("onLoad")
+        // Props
+        Prop("waveformColor") { (view: RealtimeAudioView, hexColor: String) in
+            view.setWaveformColor(hexColor)
+        }
+
+        // Functions
+        AsyncFunction("setAudioFormat") { (view: RealtimeAudioView, sampleRate: Double, bitsPerSample: Int, channels: UInt32) in
+            view.setAudioFormat(sampleRate: sampleRate, bitsPerSample: bitsPerSample, channels: channels)
+        }
+
+        AsyncFunction("addBuffer") { (view: RealtimeAudioView, base64String: String) in
+            view.addBuffer(base64String)
+        }
+
+        AsyncFunction("play") { (view: RealtimeAudioView) in
+            view.play()
+        }
+
+        AsyncFunction("pause") { (view: RealtimeAudioView) in
+            view.pause()
+        }
+
+        AsyncFunction("stop") { (view: RealtimeAudioView) in
+            view.stop()
+        }
     }
   }
 }
