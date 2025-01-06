@@ -54,7 +54,7 @@ public class RealtimeAudioModule: Module {
             // Props
             Prop("waveformColor") { (
                 view: RealtimeAudioView,
-                hexColor: String
+                hexColor: UIColor
             ) in
                 view.setWaveformColor(hexColor)
             }
@@ -72,21 +72,6 @@ public class RealtimeAudioModule: Module {
             }
             
             // Functions
-            AsyncFunction("setAudioFormat") { (
-                view: RealtimeAudioView,
-                sampleRate: Double,
-                encoding: AudioEncoding,
-                channels: UInt32,
-                interleaved: Bool
-            ) in
-                view.setAudioFormat(
-                        sampleRate: sampleRate,
-                        commonFormat: self.getCommonFormat(encoding),
-                        channels: channels,
-                        interleaved: interleaved
-                    )
-            }
-            
             AsyncFunction("addBuffer") { (
                 view: RealtimeAudioView,
                 base64String: String

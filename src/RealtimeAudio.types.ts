@@ -14,7 +14,6 @@ export type RealtimeAudioViewRef = {
   resume: () => void;
   stop: () => void;
   addBuffer: (base64EncodedAudio: string) => void;
-  setAudioFormat: (sampleRate: number, bitsPerSample: number, channels: number) => void;
 }
 
 export enum AudioEncoding {

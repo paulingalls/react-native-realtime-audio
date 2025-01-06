@@ -11,7 +11,7 @@ const client = new OpenAI({
 
 export default function App() {
   const onChangePayload = useEvent(RealtimeAudio, "onChange");
-  const waveformRef = useRef<RealtimeAudioViewRef>(null);
+  const audioViewRef = useRef<RealtimeAudioViewRef>(null);
   const [transcript, setTranscript] = useState<string>("");
 
   const playAudio = async () => {
@@ -40,7 +40,7 @@ export default function App() {
             setTranscript((prev) => prev + audio?.transcript);
           }
           if (audio?.data) {
-            waveformRef.current?.addBuffer(audio?.data);
+            audioViewRef.current?.addBuffer(audio?.data);
           }
         }
       },
@@ -83,8 +83,8 @@ export default function App() {
             }}
           />
           <RealtimeAudioView
-            ref={waveformRef}
-            waveformColor={"#000"}
+            ref={audioViewRef}
+            waveformColor={"#00F"}
             audioFormat={{ sampleRate: 24000, encoding: AudioEncoding.pcm16bitInteger, channelCount: 1, interleaved: false }}
             onPlaybackStarted={() => console.log("Playback started Callback")}
             onPlaybackStopped={() => console.log("Playback stopped Callback")}
