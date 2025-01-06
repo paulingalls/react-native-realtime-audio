@@ -1,5 +1,5 @@
 import { useEvent } from "expo";
-import RealtimeAudio, { RealtimeAudioView, RealtimeAudioViewRef } from "realtime-audio";
+import RealtimeAudio, { AudioEncoding, RealtimeAudioView, RealtimeAudioViewRef } from "realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useRef, useState } from "react";
 import OpenAI from "openai-react-native";
@@ -16,7 +16,6 @@ export default function App() {
 
   const playAudio = async () => {
     console.log("Playing audio...");
-    waveformRef.current?.setAudioFormat(24000, 16, 1);
     client.chat.completions.stream(
       {
         model: "gpt-4o-audio-preview",
@@ -86,8 +85,9 @@ export default function App() {
           <RealtimeAudioView
             ref={waveformRef}
             waveformColor={"#000"}
-            onPlaybackStarted={() => console.log("Playback started")}
-            onPlaybackStopped={() => console.log("Playback stopped")}
+            audioFormat={{ sampleRate: 24000, encoding: AudioEncoding.pcm16bitInteger, channelCount: 1, interleaved: false }}
+            onPlaybackStarted={() => console.log("Playback started Callback")}
+            onPlaybackStopped={() => console.log("Playback stopped Callback")}
             style={styles.view}
           />
           <Text>{transcript}</Text>

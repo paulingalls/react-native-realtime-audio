@@ -10,11 +10,12 @@ public class RealtimeAudioView: ExpoView {
 
     // Audio format properties
     private var sampleRate: Double = 24000
-    private var bitsPerSample: Int = 16
+    private var commonFormat: AVAudioCommonFormat = .pcmFormatInt16
     private var channels: UInt32 = 1
+    private var interleaved: Bool = false
     
-    private let onPlaybackStart = EventDispatcher()
-    private let onPlaybackStop = EventDispatcher()
+    let onPlaybackStart = EventDispatcher()
+    let onPlaybackStop = EventDispatcher()
 
     public required init(appContext: AppContext? = nil) {
         super.init(appContext: appContext)
@@ -29,8 +30,9 @@ public class RealtimeAudioView: ExpoView {
         // Recreate audio player with current format settings
         audioPlayer = RealtimeAudioPlayer(
             sampleRate: sampleRate,
+            commonFormat: commonFormat,
             channels: channels,
-            bitsPerChannel: bitsPerSample
+            interleaved: interleaved
         )
         audioPlayer?.delegate = self
     }
@@ -74,8 +76,6 @@ public class RealtimeAudioView: ExpoView {
 
     @objc
     func addBuffer(_ base64String: String) {
-        guard let data = Data(base64Encoded: base64String) else { return }
-        updateWaveformSamples(from: data)
         audioPlayer?.addBuffer(base64String)
     }
 
@@ -97,10 +97,11 @@ public class RealtimeAudioView: ExpoView {
     // MARK: - Configuration Methods
 
     @objc
-    func setAudioFormat(sampleRate: Double, bitsPerSample: Int, channels: UInt32) {
+    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32, interleaved: Bool) {
         self.sampleRate = sampleRate
-        self.bitsPerSample = bitsPerSample
+        self.commonFormat = commonFormat
         self.channels = channels
+        self.interleaved = interleaved
 
         // Recreate audio player with new settings
         setupAudioPlayer()
@@ -112,26 +113,33 @@ public class RealtimeAudioView: ExpoView {
         waveformLayer.strokeColor = color.cgColor
     }
 
-    private func updateWaveformSamples(from data: Data) {
-        let samples = data.withUnsafeBytes { (rawBufferPointer: UnsafeRawBufferPointer) -> [Float] in
-            let shorts = rawBufferPointer.bindMemory(to: Int16.self).baseAddress!
-            let count = data.count / MemoryLayout<Int16>.size
-            let strideLength = max(1, count / sampleCount)
-            
-            var samples: [Float] = []
-            for i in stride(from: 0, to: count, by: strideLength) {
-                let sample = abs(Float(shorts[i]) / Float(Int16.max))
-                samples.append(sample)
+    private func updateWaveformSamples(from buffer: AVAudioPCMBuffer) {
+        guard let channelData = buffer.floatChannelData else {
+            print("Error: Could not access float channel data")
+            return
+        }
+        
+        let channelCount = Int(buffer.format.channelCount)
+        let frameLength = Int(buffer.frameLength)
+        let strideLength = max(1, frameLength / sampleCount)
+        
+        var samples: [Float] = []
+        
+        for i in stride(from: 0, to: frameLength, by: strideLength) {
+            var sample: Float = 0
+            for channel in 0..<channelCount {
+                sample += abs(channelData[channel][i])
             }
-            
-            while samples.count > sampleCount {
-                samples.removeLast()
-            }
-            while samples.count < sampleCount {
-                samples.append(0)
-            }
-            
-            return samples
+            sample /= Float(channelCount)
+            samples.append(sample)
+        }
+        
+        // Adjust sample count if necessary
+        while samples.count > sampleCount {
+            samples.removeLast()
+        }
+        while samples.count < sampleCount {
+            samples.append(0)
         }
         
         currentSamples = samples
@@ -139,25 +147,22 @@ public class RealtimeAudioView: ExpoView {
             self?.updateWaveformPath()
         }
     }
-    
-    public func sendPlaybackStartEvent() {
-        onPlaybackStart()
-    }
-    
-    public func sendPlaybackStopEvent() {
-        onPlaybackStop()
-    }
 }
 
 extension RealtimeAudioView: RealtimeAudioPlayerDelegate {
     func audioPlayerDidStartPlaying() {
-        sendPlaybackStartEvent()
+        onPlaybackStart()
     }
-
+    
     func audioPlayerDidStopPlaying() {
-        sendPlaybackStopEvent()
+        onPlaybackStop()
+    }
+    
+    func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer) {
+        updateWaveformSamples(from: buffer)
     }
 }
+
 
 extension UIColor {
     convenience init?(hex: String) {

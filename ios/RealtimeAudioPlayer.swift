@@ -4,6 +4,7 @@ import AVFoundation
 protocol RealtimeAudioPlayerDelegate: AnyObject {
     func audioPlayerDidStartPlaying()
     func audioPlayerDidStopPlaying()
+    func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer)
 }
 
 class RealtimeAudioPlayer {
@@ -29,11 +30,11 @@ class RealtimeAudioPlayer {
     
     weak var delegate: RealtimeAudioPlayerDelegate?
     
-    init?(sampleRate: Double, channels: UInt32 = 1, bitsPerChannel: Int = 16) {
-        guard let inputFormat = AVAudioFormat(commonFormat: .pcmFormatInt16,
-                                         sampleRate: sampleRate,
-                                         channels: channels,
-                                         interleaved: false
+    init?(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32 = 1, interleaved: Bool = false) {
+        guard let inputFormat = AVAudioFormat(commonFormat: commonFormat,
+                                              sampleRate: sampleRate,
+                                              channels: AVAudioChannelCount(channels),
+                                              interleaved: interleaved
         ) else {
             return nil
         }
@@ -44,18 +45,7 @@ class RealtimeAudioPlayer {
         setupAudioEngine()
     }
     
-    private func setupAudioEngine() {
-        engine.attach(playerNode)
-        engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)
-        
-        do {
-            try engine.start()
-        } catch {
-            print("Error starting audio engine: \(error.localizedDescription)")
-        }
-    }
-    
-    func addBuffer(_ base64EncodedString: String) {
+    public func addBuffer(_ base64EncodedString: String) {
         guard let data = Data(base64Encoded: base64EncodedString) else {
             print("Error: Invalid base64 string")
             return
@@ -68,6 +58,17 @@ class RealtimeAudioPlayer {
             checkAndStartPlayback()
         } catch {
             print("Error creating buffer: \(error.localizedDescription)")
+        }
+    }
+    
+    private func setupAudioEngine() {
+        engine.attach(playerNode)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)
+        
+        do {
+            try engine.start()
+        } catch {
+            print("Error starting audio engine: \(error.localizedDescription)")
         }
     }
     
@@ -107,7 +108,7 @@ class RealtimeAudioPlayer {
         let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: 4096)!
         
         var error: NSError?
-        let outputStatus = audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
+        audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
             let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
             let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
             
@@ -121,7 +122,7 @@ class RealtimeAudioPlayer {
             let destData = tempBuffer.audioBufferList.pointee.mBuffers
             
             destData.mData?.copyMemory(from: sourceData.mData!.advanced(by: Int(sourceOffset)),
-                                     byteCount: Int(samplesToCopy * bytesPerFrame))
+                                       byteCount: Int(samplesToCopy * bytesPerFrame))
             
             self.currentInputBufferSampleOffset += samplesToCopy
             
@@ -145,10 +146,12 @@ class RealtimeAudioPlayer {
             inputStatus.pointee = .haveData
             return tempBuffer
         }
-
+        
         playerNode.scheduleBuffer(outputBuffer, at: nil) { [weak self] in
             self?.startPlayingNextBuffer()
         }
+        
+        delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer)
         
         if !playerNode.isPlaying {
             playerNode.play()
