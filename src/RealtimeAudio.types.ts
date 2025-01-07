@@ -23,13 +23,15 @@ export enum AudioEncoding {
   pcm64bitFloat = "pcm64bitFloat",
 }
 
+export type AudioFormat = {
+  sampleRate: number;
+  encoding: AudioEncoding;
+  channelCount: number;
+  interleaved: boolean;
+}
+
 export type RealtimeAudioViewProps = {
-  audioFormat: {
-    sampleRate: number;
-    encoding: AudioEncoding;
-    channelCount: number;
-    interleaved: boolean;
-  }
+  audioFormat: AudioFormat;
   ref?: Ref<RealtimeAudioViewRef>;
   waveformColor?: string;
   onPlaybackStarted?: () => void;

@@ -80,7 +80,7 @@ public class RealtimeAudioView: ExpoView {
     }
 
     @objc
-    func play() {
+    func resume() {
         audioPlayer?.resume()
     }
 

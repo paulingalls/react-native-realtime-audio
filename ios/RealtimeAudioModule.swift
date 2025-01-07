@@ -15,35 +15,40 @@ struct AudioFormatSettings: Record {
 }
 
 public class RealtimeAudioModule: Module {
-    // Each module class must implement the definition function. The definition consists of components
-    // that describes the module's functionality and behavior.
-    // See https://docs.expo.dev/modules/module-api for more details about available components.
+    private var audioPlayer: RealtimeAudioPlayer?
+    
     public func definition() -> ModuleDefinition {
-        // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-        // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-        // The module will be accessible from `requireNativeModule('RealtimeAudio')` in JavaScript.
         Name("RealtimeAudio")
         
-        // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-        Constants([
-            "PI": Double.pi
-        ])
-        
-        // Defines event names that the module can send to JavaScript.
         Events("onPlaybackStarted", "onPlaybackStopped")
-        
-        // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-        Function("hello") {
-            return "Hello world! 👋"
-        }
-        
-        // Defines a JavaScript function that always returns a Promise and whose native code
-        // is by default dispatched on the different thread than the JavaScript runtime runs on.
-        AsyncFunction("setValueAsync") { (value: String) in
-            // Send an event to JavaScript.
-            self.sendEvent("onChange", [
-                "value": value
-            ])
+                
+        Class(RealtimeAudioPlayer.self) {
+            Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioPlayer in
+                return RealtimeAudioPlayer(sampleRate: audioFormat.sampleRate,
+                                           commonFormat: getCommonFormat(audioFormat.encoding),
+                                           channels: audioFormat.channelCount,
+                                           interleaved: audioFormat.interleaved)!
+            }
+            
+            // Functions
+            AsyncFunction("addBuffer") { (
+                player: RealtimeAudioPlayer,
+                base64String: String
+            ) in
+                player.addBuffer(base64String)
+            }
+            
+            AsyncFunction("resume") { (player: RealtimeAudioPlayer) in
+                player.resume()
+            }
+            
+            AsyncFunction("pause") { (player: RealtimeAudioPlayer) in
+                player.pause()
+            }
+            
+            AsyncFunction("stop") { (player: RealtimeAudioPlayer) in
+                player.stop()
+            }
         }
         
         // Enables the module to be used as a native view. Definition components that are accepted as part of the
@@ -79,8 +84,8 @@ public class RealtimeAudioModule: Module {
                 view.addBuffer(base64String)
             }
             
-            AsyncFunction("play") { (view: RealtimeAudioView) in
-                view.play()
+            AsyncFunction("resume") { (view: RealtimeAudioView) in
+                view.resume()
             }
             
             AsyncFunction("pause") { (view: RealtimeAudioView) in

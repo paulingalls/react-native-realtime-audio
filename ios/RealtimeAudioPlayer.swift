@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import ExpoModulesCore
 
 protocol RealtimeAudioPlayerDelegate: AnyObject {
     func audioPlayerDidStartPlaying()
@@ -7,7 +8,7 @@ protocol RealtimeAudioPlayerDelegate: AnyObject {
     func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer)
 }
 
-class RealtimeAudioPlayer {
+class RealtimeAudioPlayer: SharedObject {
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let inputFormat: AVAudioFormat
@@ -42,6 +43,7 @@ class RealtimeAudioPlayer {
         let outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
         self.outputFormat = AVAudioFormat(commonFormat: outputFormat.commonFormat, sampleRate: 48000, channels: outputFormat.channelCount, interleaved: outputFormat.isInterleaved)!
         self.audioConverter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)!
+        super.init()
         setupAudioEngine()
     }
     

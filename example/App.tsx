@@ -10,12 +10,61 @@ const client = new OpenAI({
 });
 
 export default function App() {
-  const onChangePayload = useEvent(RealtimeAudio, "onChange");
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
   const [transcript, setTranscript] = useState<string>("");
 
   const playAudio = async () => {
     console.log("Playing audio...");
+    setTranscript("");
+    const player = new RealtimeAudio.RealtimeAudioPlayer({
+      sampleRate: 24000,
+      encoding: AudioEncoding.pcm16bitInteger,
+      channelCount: 1,
+      interleaved: false
+    });
+    client.chat.completions.stream(
+      {
+        model: "gpt-4o-audio-preview",
+        modalities: ["text", "audio"],
+        audio: { voice: "alloy", format: "pcm16" },
+        messages: [
+          {
+            "role": "system",
+            "content": "You are an experienced programmer"
+          },
+          {
+            role: "user",
+            content: "In what language was the first Hello World program written?"
+          }
+        ]
+      },
+      (data) => {
+        // @ts-ignore
+        const audio = data.choices[0].delta?.audio;
+        if (audio) {
+          if (audio?.transcript) {
+            setTranscript((prev) => prev + audio?.transcript);
+          }
+          if (audio?.data) {
+            player.addBuffer(audio?.data);
+          }
+        }
+      },
+      {
+        onError: (error) => {
+          console.error("SSE Error:", error); // Handle any errors here
+        },
+        onOpen: () => {
+          console.log("SSE connection for completion opened."); // Handle when the connection is opened
+        }
+      }
+    );
+  };
+
+
+  const playAudioInView = async () => {
+    console.log("Playing audio in view...");
+    setTranscript("");
     client.chat.completions.stream(
       {
         model: "gpt-4o-audio-preview",
@@ -28,7 +77,7 @@ export default function App() {
           },
           {
             role: "user",
-            content: "Will you please tell me about the history of Hello World in programming?"
+            content: "Who was responsible for the first Hello World program?"
           }
         ]
       },
@@ -54,42 +103,41 @@ export default function App() {
       }
     );
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
-        <Group name="Constants">
-          <Text>{RealtimeAudio.PI}</Text>
-        </Group>
-        <Group name="Functions">
-          <Text>{RealtimeAudio.hello()}</Text>
-        </Group>
-        <Group name="Async functions">
-          <Button
-            title="Set value"
-            onPress={async () => {
-              await RealtimeAudio.setValueAsync("Hello from JS!");
-            }}
-          />
-        </Group>
-        <Group name="Events">
-          <Text>{onChangePayload?.value}</Text>
-        </Group>
-        <Group name="Views">
+        <Group name="RealtimeAudioPlayer">
           <Button
             title="Play Audio"
             onPress={async () => {
               await playAudio();
             }}
           />
+        </Group>
+        <Group name="RealtimeAudioView">
+          <Button
+            title="Play Audio In View"
+            onPress={async () => {
+              await playAudioInView();
+            }}
+          />
           <RealtimeAudioView
             ref={audioViewRef}
             waveformColor={"#00F"}
-            audioFormat={{ sampleRate: 24000, encoding: AudioEncoding.pcm16bitInteger, channelCount: 1, interleaved: false }}
+            audioFormat={{
+              sampleRate: 24000,
+              encoding: AudioEncoding.pcm16bitInteger,
+              channelCount: 1,
+              interleaved: false
+            }}
             onPlaybackStarted={() => console.log("Playback started Callback")}
             onPlaybackStopped={() => console.log("Playback stopped Callback")}
             style={styles.view}
           />
+        </Group>
+        <Group name="Transcript">
           <Text>{transcript}</Text>
         </Group>
       </ScrollView>
@@ -127,6 +175,6 @@ const styles = {
   },
   view: {
     flex: 1,
-    height: 200
+    height: 100,
   }
 };
