@@ -41,8 +41,8 @@ class RealtimeAudioView(context: Context, appContext: AppContext) : ExpoView(con
         }
     }
 
-    fun setWaveformColor(color: Color) {
-        waveformPaint.color = color.toArgb()
+    fun setWaveformColor(color: Int) {
+        waveformPaint.color = color
         invalidate()
     }
 

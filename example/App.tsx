@@ -125,7 +125,7 @@ export default function App() {
           />
           <RealtimeAudioView
             ref={audioViewRef}
-            waveformColor={"#00F"}
+            waveformColor={"#F00"}
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,

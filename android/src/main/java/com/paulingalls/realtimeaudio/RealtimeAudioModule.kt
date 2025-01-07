@@ -5,8 +5,8 @@ import android.graphics.Color
 import android.media.AudioFormat
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import expo.modules.kotlin.records.Record
 import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
 import expo.modules.kotlin.types.Enumerable
 
 enum class AudioEncoding(val value: String) : Enumerable {
@@ -62,9 +62,10 @@ class RealtimeAudioModule : Module() {
         View(RealtimeAudioView::class) {
             Events("onPlaybackStarted", "onPlaybackStopped")
 
-            Prop("waveformColor") { view: RealtimeAudioView, hexColor: Color ->
-                view.setWaveformColor(hexColor)
+            Prop("waveformColor") { view: RealtimeAudioView, hexColor: String ->
+                view.setWaveformColor(getAndroidColor(hexColor))
             }
+
             Prop("audioFormat") { view: RealtimeAudioView, format: AudioFormatSettings ->
                 view.setAudioFormat(
                     format.sampleRate,
@@ -86,6 +87,17 @@ class RealtimeAudioModule : Module() {
                 view.stopPlayback()
             }
         }
+    }
+
+    private fun getAndroidColor(hexString: String ): Int {
+        val cleanString = hexString.trim().lowercase()
+        if (cleanString[0] == '#' && cleanString.length == 4) {
+            val r = cleanString[1].toString().repeat(2).toInt(16)
+            val g = cleanString[2].toString().repeat(2).toInt(16)
+            val b = cleanString[3].toString().repeat(2).toInt(16)
+            return Color.rgb(r, g, b)
+        }
+        return Color.parseColor(cleanString)
     }
 
     private fun mapAudioEncodingToFormat(encoding: AudioEncoding): Int {

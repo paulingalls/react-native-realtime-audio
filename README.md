@@ -1,35 +1,133 @@
-# realtime-audio
+# RealtimeAudio
 
-Play audio buffers in realtime
+A React Native Expo module for real-time audio playback and visualization. This module provides components for streaming and playing audio buffers in real-time, with optional waveform visualization.
 
-# API documentation
+## Installation
 
-- [Documentation for the latest stable release](https://docs.expo.dev/versions/latest/sdk/realtime-audio/)
-- [Documentation for the main branch](https://docs.expo.dev/versions/unversioned/sdk/realtime-audio/)
-
-# Installation in managed Expo projects
-
-For [managed](https://docs.expo.dev/archive/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If you follow the link and there is no documentation available then this library is not yet usable within managed projects &mdash; it is likely to be included in an upcoming Expo SDK release.
-
-# Installation in bare React Native projects
-
-For bare React Native projects, you must ensure that you have [installed and configured the `expo` package](https://docs.expo.dev/bare/installing-expo-modules/) before continuing.
-
-### Add the package to your npm dependencies
-
-```
-npm install realtime-audio
+```bash
+npx expo install realtime-audio
 ```
 
-### Configure for Android
+## Features
 
+- Real-time audio playback from base64-encoded buffers
+- Configurable sample rate, encoding, and channel count
+- Built-in waveform visualization component
+- Low-latency streaming capabilities
+- Simple, easy-to-use API
 
+## Components
 
+### RealtimeAudioPlayer
 
-### Configure for iOS
+A component that handles real-time audio playback from base64-encoded buffers.
 
-Run `npx pod-install` after installing the npm package.
+#### Props
 
-# Contributing
+- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
+- `encoding` (string): The audio encoding format (e.g., 'pcm16', 'float32')
+- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
 
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
+#### Example Usage
+
+```javascript
+import { RealtimeAudioPlayer } from 'realtime-audio';
+
+function AudioStreamPlayer() {
+  return (
+    <RealtimeAudioPlayer
+      sampleRate={44100}
+      encoding="pcm16"
+      channelCount={1}
+      onBuffer={(buffer) => {
+        // Handle new audio buffer
+      }}
+    />
+  );
+}
+```
+
+### RealtimeAudioView
+
+Extends the functionality of RealtimeAudioPlayer by adding a visual waveform representation of the audio being played.
+
+#### Props
+
+Includes all props from RealtimeAudioPlayer, plus:
+
+- `waveformColor` (string): Color of the waveform (default: '#000000')
+- `backgroundColor` (string): Background color of the visualization (default: 'transparent')
+- `height` (number): Height of the waveform view in pixels
+- `width` (number): Width of the waveform view in pixels
+
+#### Example Usage
+
+```javascript
+import { RealtimeAudioView } from 'realtime-audio';
+
+function AudioVisualizer() {
+  return (
+    <RealtimeAudioView
+      sampleRate={44100}
+      encoding="pcm16"
+      channelCount={2}
+      waveformColor="#2196F3"
+      height={100}
+      width={300}
+      onBuffer={(buffer) => {
+        // Handle new audio buffer
+      }}
+    />
+  );
+}
+```
+
+## API Reference
+
+### Playing Audio Buffers
+
+Both components accept base64-encoded audio buffers through their `playBuffer` method:
+
+```javascript
+// Example of playing a buffer
+const audioComponent = useRef(null);
+
+// Play a base64-encoded audio buffer
+audioComponent.current.playBuffer(base64EncodedAudioData);
+```
+
+### Event Handlers
+
+- `onBuffer`: Called when a new buffer is received
+- `onError`: Called when an error occurs during playback
+- `onPlaybackComplete`: Called when the current buffer has finished playing
+
+## Supported Formats
+
+- Sample Rates: 8000Hz - 48000Hz
+- Encodings: pcm16, float32
+- Channel Counts: 1 (mono), 2 (stereo)
+
+## Performance Considerations
+
+- Buffer sizes should be optimized for your use case. Smaller buffers provide lower latency but require more frequent updates
+- For real-time applications, recommended buffer sizes are between 512 and 4096 samples
+- The waveform visualization may impact performance on lower-end devices
+
+## Requirements
+
+- Expo SDK 45 or higher
+- iOS 11.0 or higher
+- Android API level 21 or higher
+
+## License
+
+MIT
+
+## Contributing
+
+Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
+
+## Support
+
+For issues and feature requests, please file an issue on the GitHub repository.
