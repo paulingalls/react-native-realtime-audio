@@ -74,11 +74,9 @@ class RealtimeAudioPlayer(
                         delegate?.bufferReady(buffer)
                         audioTrack?.write(buffer, 0, buffer.size)
                     } else {
-                        // No more buffers, wait for a short time before checking again
-                        Thread.sleep(10)
+                        isPlaying = false
                     }
                 } else {
-                    // If paused, wait before checking again
                     Thread.sleep(100)
                 }
             }
