@@ -14,8 +14,8 @@ public class RealtimeAudioView: ExpoView {
     private var channels: UInt32 = 1
     private var interleaved: Bool = false
     
-    let onPlaybackStart = EventDispatcher()
-    let onPlaybackStop = EventDispatcher()
+    let onPlaybackStarted = EventDispatcher()
+    let onPlaybackStopped = EventDispatcher()
 
     public required init(appContext: AppContext? = nil) {
         super.init(appContext: appContext)
@@ -150,11 +150,11 @@ public class RealtimeAudioView: ExpoView {
 
 extension RealtimeAudioView: RealtimeAudioPlayerDelegate {
     func audioPlayerDidStartPlaying() {
-        onPlaybackStart()
+        onPlaybackStarted()
     }
     
     func audioPlayerDidStopPlaying() {
-        onPlaybackStop()
+        onPlaybackStopped()
     }
     
     func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer) {
