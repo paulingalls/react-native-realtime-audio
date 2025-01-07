@@ -54,8 +54,8 @@ public class RealtimeAudioModule: Module {
         // Enables the module to be used as a native view. Definition components that are accepted as part of the
         // view definition: Prop, Events.
         View(RealtimeAudioView.self) {
-            Events("onPlaybackStart", "onPlaybackStop")
-            
+            Events("onPlaybackStarted", "onPlaybackStopped")
+
             // Props
             Prop("waveformColor") { (
                 view: RealtimeAudioView,

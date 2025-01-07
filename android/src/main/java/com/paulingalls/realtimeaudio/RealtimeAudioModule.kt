@@ -1,50 +1,105 @@
 package com.paulingalls.realtimeaudio
 
+import RealtimeAudioPlayer
+import android.graphics.Color
+import android.media.AudioFormat
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
+import expo.modules.kotlin.records.Record
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.types.Enumerable
+
+enum class AudioEncoding(val value: String) : Enumerable {
+    pcm16bitInteger("pcm16bitInteger"),
+    pcm32bitInteger("pcm32bitInteger"),
+    pcm32bitFloat("pcm32bitFloat"),
+    pcm64bitFloat("pcm64bitFloat")
+}
+
+
+class AudioFormatSettings : Record {
+    @Field
+    val sampleRate: Int = 24000
+
+    @Field
+    val encoding: AudioEncoding = AudioEncoding.pcm16bitInteger
+
+    @Field
+    val channelCount: Int = 1
+
+    @Field
+    val interleaved: Boolean? = null
+}
 
 class RealtimeAudioModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
-  override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('RealtimeAudio')` in JavaScript.
-    Name("RealtimeAudio")
+    override fun definition() = ModuleDefinition {
+        Name("RealtimeAudio")
+        Events("onPlaybackStarted", "onPlaybackStopped")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants(
-      "PI" to Math.PI
-    )
+        Class("RealtimeAudioPlayer", RealtimeAudioPlayer::class) {
+            Constructor { format: AudioFormatSettings ->
+                return@Constructor RealtimeAudioPlayer(
+                    format.sampleRate,
+                    mapChannelCountToFormat(format.channelCount),
+                    mapAudioEncodingToFormat(format.encoding)
+                )
+            }
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+            AsyncFunction("addBuffer") { player: RealtimeAudioPlayer, base64String: String ->
+                player.addBuffer(base64String)
+            }
+            AsyncFunction("pause") { player: RealtimeAudioPlayer ->
+                player.pausePlayback()
+            }
+            AsyncFunction("resume") { player: RealtimeAudioPlayer ->
+                player.resumePlayback()
+            }
+            AsyncFunction("stop") { player: RealtimeAudioPlayer ->
+                player.stopPlayback()
+            }
+        }
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
+        View(RealtimeAudioView::class) {
+            Events("onPlaybackStarted", "onPlaybackStopped")
+
+            Prop("waveformColor") { view: RealtimeAudioView, hexColor: Color ->
+                view.setWaveformColor(hexColor)
+            }
+            Prop("audioFormat") { view: RealtimeAudioView, format: AudioFormatSettings ->
+                view.setAudioFormat(
+                    format.sampleRate,
+                    mapChannelCountToFormat(format.channelCount),
+                    mapAudioEncodingToFormat(format.encoding)
+                )
+            }
+
+            AsyncFunction("addBuffer") { view: RealtimeAudioView, base64String: String ->
+                view.addAudioBuffer(base64String)
+            }
+            AsyncFunction("pause") { view: RealtimeAudioView ->
+                view.pausePlayback()
+            }
+            AsyncFunction("resume") { view: RealtimeAudioView ->
+                view.resumePlayback()
+            }
+            AsyncFunction("stop") { view: RealtimeAudioView ->
+                view.stopPlayback()
+            }
+        }
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
+    private fun mapAudioEncodingToFormat(encoding: AudioEncoding): Int {
+        return when (encoding) {
+            AudioEncoding.pcm16bitInteger -> AudioFormat.ENCODING_PCM_16BIT
+            AudioEncoding.pcm32bitInteger -> AudioFormat.ENCODING_PCM_32BIT
+            AudioEncoding.pcm32bitFloat -> AudioFormat.ENCODING_PCM_FLOAT
+            AudioEncoding.pcm64bitFloat -> AudioFormat.ENCODING_PCM_FLOAT
+        }
     }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(RealtimeAudioView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: RealtimeAudioView, url: URL ->
-        view.webView.loadUrl(url.toString())
-      }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
+    private fun mapChannelCountToFormat(channelCount: Int): Int {
+        if (channelCount == 2) return AudioFormat.CHANNEL_OUT_STEREO
+        return AudioFormat.CHANNEL_OUT_MONO
     }
-  }
+
 }

@@ -2,7 +2,8 @@ import { ViewProps } from "react-native";
 import { Ref } from "react";
 
 export type RealtimeAudioModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
+  onPlaybackStarted: () => void;
+  onPlaybackStopped: () => void;
 };
 
 export type ChangeEventPayload = {
