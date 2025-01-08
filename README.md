@@ -1,4 +1,4 @@
-# RealtimeAudio
+# React Native Realtime Audio
 
 A React Native Expo module for real-time audio playback and visualization. This module provides components for streaming and playing audio buffers in real-time, with optional waveform visualization.
 
