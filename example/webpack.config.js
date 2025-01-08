@@ -6,7 +6,7 @@ module.exports = async (env, argv) => {
     {
       ...env,
       babel: {
-        dangerouslyAddModulePathsToTranspile: ['realtime-audio'],
+        dangerouslyAddModulePathsToTranspile: ['react-native-realtime-audio'],
       },
     },
     argv

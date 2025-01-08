@@ -19,7 +19,7 @@ config.resolver.nodeModulesPaths = [
 ];
 
 config.resolver.extraNodeModules = {
-  'realtime-audio': '..',
+  'react-native-realtime-audio': '..',
 };
 
 config.watchFolders = [path.resolve(__dirname, '..')];

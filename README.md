@@ -5,7 +5,7 @@ A React Native Expo module for real-time audio playback and visualization. This 
 ## Installation
 
 ```bash
-npx expo install realtime-audio
+npx expo install react-native-realtime-audio
 ```
 
 ## Features

@@ -1,5 +1,5 @@
 import { useEventListener } from "expo";
-import RealtimeAudio, { AudioEncoding, RealtimeAudioView, RealtimeAudioViewRef } from "realtime-audio";
+import RealtimeAudio, { AudioEncoding, RealtimeAudioView, RealtimeAudioViewRef } from "react-native-realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useRef, useState } from "react";
 import OpenAI from "openai-react-native";

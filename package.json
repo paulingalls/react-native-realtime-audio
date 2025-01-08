@@ -1,8 +1,8 @@
 {
-  "name": "realtime-audio",
+  "name": "react-native-realtime-audio",
   "version": "0.1.0",
   "author": "paulingalls <paulingalls@gmail.com> (https://github.com/paulingalls)",
-  "repository": "https://github.com/paulingalls/realtime-audio",
+  "repository": "https://github.com/paulingalls/react-native-realtime-audio",
   "main": "build/index.js",
   "devDependencies": {
     "@types/react": "~18.3.12",
@@ -16,13 +16,14 @@
     "react-native": "*"
   },
   "bugs": {
-    "url": "https://github.com/paulingalls/realtime-audio/issues"
+    "url": "https://github.com/paulingalls/react-native-realtime-audio/issues"
   },
   "description": "Play audio buffers in realtime",
-  "homepage": "https://github.com/paulingalls/realtime-audio#readme",
+  "homepage": "https://github.com/paulingalls/react-native-realtime-audio#readme",
   "keywords": [
     "react-native",
     "expo",
+    "react-native-realtime-audio",
     "realtime-audio",
     "RealtimeAudio"
   ],

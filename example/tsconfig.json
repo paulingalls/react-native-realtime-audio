@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "realtime-audio": ["../src/index"],
-      "realtime-audio/*": ["../src/*"]
+      "react-native-realtime-audio": ["../src/index"],
+      "react-native-realtime-audio/*": ["../src/*"]
     }
   }
 }
