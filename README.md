@@ -11,41 +11,12 @@ npx expo install realtime-audio
 ## Features
 
 - Real-time audio playback from base64-encoded buffers
-- Configurable sample rate, encoding, and channel count
+- Configurable sample rate, audio encoding, and channel count
 - Built-in waveform visualization component
 - Low-latency streaming capabilities
 - Simple, easy-to-use API
 
 ## Components
-
-### RealtimeAudioPlayer
-
-A component that handles real-time audio playback from base64-encoded buffers.
-
-#### Props
-
-- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
-- `encoding` (string): The audio encoding format (e.g., 'pcm16', 'float32')
-- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
-
-#### Example Usage
-
-```javascript
-import { RealtimeAudioPlayer } from 'realtime-audio';
-
-function AudioStreamPlayer() {
-  return (
-    <RealtimeAudioPlayer
-      sampleRate={44100}
-      encoding="pcm16"
-      channelCount={1}
-      onBuffer={(buffer) => {
-        // Handle new audio buffer
-      }}
-    />
-  );
-}
-```
 
 ### RealtimeAudioView
 
@@ -53,12 +24,16 @@ Extends the functionality of RealtimeAudioPlayer by adding a visual waveform rep
 
 #### Props
 
-Includes all props from RealtimeAudioPlayer, plus:
+AudioFormat:
+- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
+- `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
+- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
+- `interleaved` (boolean): For multichannel, whether the audio data is interleaved (default: true)
 
-- `waveformColor` (string): Color of the waveform (default: '#000000')
-- `backgroundColor` (string): Background color of the visualization (default: 'transparent')
-- `height` (number): Height of the waveform view in pixels
-- `width` (number): Width of the waveform view in pixels
+Other Props:
+- `waveformColor` (string): Color of the waveform (default: '#00F')
+- `onPlaybackStarted` (function): Called when playback starts
+- `onPlaybackStopped` (function): Called when playback stops
 
 #### Example Usage
 
@@ -66,21 +41,56 @@ Includes all props from RealtimeAudioPlayer, plus:
 import { RealtimeAudioView } from 'realtime-audio';
 
 function AudioVisualizer() {
+  const audioViewRef = useRef<RealtimeAudioViewRef>(null);
+
+  // in a callback somewhere
+  audioViewRef.current?.addBuffer(audio?.data);
+
   return (
     <RealtimeAudioView
-      sampleRate={44100}
-      encoding="pcm16"
-      channelCount={2}
-      waveformColor="#2196F3"
-      height={100}
-      width={300}
-      onBuffer={(buffer) => {
-        // Handle new audio buffer
+      ref={audioViewRef}
+      waveformColor={"#F00"}
+      audioFormat={{
+        sampleRate: 24000,
+        encoding: AudioEncoding.pcm16bitInteger,
+        channelCount: 1,
+        interleaved: false
       }}
+      onPlaybackStarted={() => console.log("RealtimeAudioView playback started")}
+      onPlaybackStopped={() => console.log("RealtimeAudioView playback stopped")}
+      style={styles.view}
     />
   );
 }
 ```
+
+### RealtimeAudioPlayer
+
+A class that handles real-time audio playback from base64-encoded buffers.
+
+#### Constructor Parameters
+
+- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
+- `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
+- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
+- `interleaved` (boolean): For multichannel, whether the audio data is interleaved (default: true)
+
+#### Example Usage
+
+```javascript
+import RealtimeAudio from 'react-native-realtime-audio';
+
+const player = new RealtimeAudio.RealtimeAudioPlayer({
+  sampleRate: 24000,
+  encoding: AudioEncoding.pcm16bitInteger,
+  channelCount: 1,
+  interleaved: false
+});
+
+player.addBuffer(audio?.data);
+
+```
+
 
 ## API Reference
 
@@ -98,35 +108,24 @@ audioComponent.current.playBuffer(base64EncodedAudioData);
 
 ### Event Handlers
 
-- `onBuffer`: Called when a new buffer is received
-- `onError`: Called when an error occurs during playback
-- `onPlaybackComplete`: Called when the current buffer has finished playing
+- `onPlaybackStarted`: Called when buffers are available for playback
+- `onPlaybackStopped`: Called when buffers are no longer available for playback
 
 ## Supported Formats
 
-- Sample Rates: 8000Hz - 48000Hz
-- Encodings: pcm16, float32
-- Channel Counts: 1 (mono), 2 (stereo)
-
-## Performance Considerations
-
-- Buffer sizes should be optimized for your use case. Smaller buffers provide lower latency but require more frequent updates
-- For real-time applications, recommended buffer sizes are between 512 and 4096 samples
-- The waveform visualization may impact performance on lower-end devices
+- Sample Rates: 8000Hz - 48000Hz (current tested with 24000Hz)
+- Encodings: pcm16, float32 (currently tested with pcm16)
+- Channel Counts: 1 (mono), 2 (stereo) (currently tested with mono)
 
 ## Requirements
 
-- Expo SDK 45 or higher
-- iOS 11.0 or higher
-- Android API level 21 or higher
+- Expo SDK 50 or higher
+- iOS 15.1 or higher
+- Android API level 26 or higher
 
 ## License
 
 MIT
-
-## Contributing
-
-Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
 
 ## Support
 
