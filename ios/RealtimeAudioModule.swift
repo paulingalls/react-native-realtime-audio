@@ -14,20 +14,30 @@ struct AudioFormatSettings: Record {
     @Field public var interleaved: Bool = false
 }
 
-public class RealtimeAudioModule: Module {
-    private var audioPlayer: RealtimeAudioPlayer?
+public class RealtimeAudioModule: Module, RealtimeAudioPlayerDelegate {
+    var hasListeners: Bool = false
     
     public func definition() -> ModuleDefinition {
         Name("RealtimeAudio")
         
         Events("onPlaybackStarted", "onPlaybackStopped")
-                
+
+        OnStartObserving {
+            hasListeners = true
+        }
+
+        OnStopObserving {
+            hasListeners = false
+        }
+        
         Class(RealtimeAudioPlayer.self) {
             Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioPlayer in
-                return RealtimeAudioPlayer(sampleRate: audioFormat.sampleRate,
-                                           commonFormat: getCommonFormat(audioFormat.encoding),
-                                           channels: audioFormat.channelCount,
-                                           interleaved: audioFormat.interleaved)!
+                let player: RealtimeAudioPlayer = RealtimeAudioPlayer(sampleRate: audioFormat.sampleRate,
+                                                                             commonFormat: getCommonFormat(audioFormat.encoding),
+                                                                             channels: audioFormat.channelCount,
+                                                                             interleaved: audioFormat.interleaved)!
+                player.delegate = self
+                return player
             }
             
             // Functions
@@ -96,6 +106,17 @@ public class RealtimeAudioModule: Module {
                 view.stop()
             }
         }
+    }
+    
+    func audioPlayerDidStartPlaying() {
+        sendEvent("onPlaybackStarted")
+    }
+    
+    func audioPlayerDidStopPlaying() {
+        sendEvent("onPlaybackStopped")
+    }
+    
+    func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer) {
     }
     
     private func getCommonFormat(_ encoding: AudioEncoding) -> AVAudioCommonFormat {
