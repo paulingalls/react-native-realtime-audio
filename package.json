@@ -2,7 +2,10 @@
   "name": "react-native-realtime-audio",
   "version": "0.1.0",
   "author": "paulingalls <paulingalls@gmail.com> (https://github.com/paulingalls)",
-  "repository": "https://github.com/paulingalls/react-native-realtime-audio",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulingalls/react-native-realtime-audio.git"
+  },
   "main": "build/index.js",
   "devDependencies": {
     "@types/react": "~18.3.12",
