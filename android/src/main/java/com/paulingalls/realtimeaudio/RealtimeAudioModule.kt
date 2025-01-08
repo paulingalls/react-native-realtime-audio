@@ -1,6 +1,7 @@
 package com.paulingalls.realtimeaudio
 
 import RealtimeAudioPlayer
+import RealtimeAudioPlayerDelegate
 import android.graphics.Color
 import android.media.AudioFormat
 import expo.modules.kotlin.modules.Module
@@ -32,9 +33,19 @@ class AudioFormatSettings : Record {
 }
 
 class RealtimeAudioModule : Module() {
+    var hasListeners = false
+
     override fun definition() = ModuleDefinition {
         Name("RealtimeAudio")
         Events("onPlaybackStarted", "onPlaybackStopped")
+
+        OnStartObserving {
+            hasListeners = true
+        }
+
+        OnStopObserving {
+            hasListeners = false
+        }
 
         Class("RealtimeAudioPlayer", RealtimeAudioPlayer::class) {
             Constructor { format: AudioFormatSettings ->
@@ -42,7 +53,9 @@ class RealtimeAudioModule : Module() {
                     format.sampleRate,
                     mapChannelCountToFormat(format.channelCount),
                     mapAudioEncodingToFormat(format.encoding)
-                )
+                ).apply {
+                    delegate = RealtimeEventDelegate(this@RealtimeAudioModule)
+                }
             }
 
             AsyncFunction("addBuffer") { player: RealtimeAudioPlayer, base64String: String ->
@@ -89,7 +102,27 @@ class RealtimeAudioModule : Module() {
         }
     }
 
-    private fun getAndroidColor(hexString: String ): Int {
+    class RealtimeEventDelegate(
+        private val module: RealtimeAudioModule
+    ) : RealtimeAudioPlayerDelegate {
+
+        override fun playbackStarted() {
+            if (module.hasListeners) {
+                module.sendEvent("onPlaybackStarted")
+            }
+        }
+
+        override fun playbackStopped() {
+            if (module.hasListeners) {
+                module.sendEvent("onPlaybackStopped")
+            }
+        }
+
+        override fun bufferReady(buffer: ByteArray) {
+        }
+    }
+
+    private fun getAndroidColor(hexString: String): Int {
         val cleanString = hexString.trim().lowercase()
         if (cleanString[0] == '#' && cleanString.length == 4) {
             val r = cleanString[1].toString().repeat(2).toInt(16)
@@ -113,5 +146,4 @@ class RealtimeAudioModule : Module() {
         if (channelCount == 2) return AudioFormat.CHANNEL_OUT_STEREO
         return AudioFormat.CHANNEL_OUT_MONO
     }
-
 }

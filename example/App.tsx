@@ -1,4 +1,4 @@
-import { useEvent } from "expo";
+import { useEventListener } from "expo";
 import RealtimeAudio, { AudioEncoding, RealtimeAudioView, RealtimeAudioViewRef } from "realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useRef, useState } from "react";
@@ -12,6 +12,12 @@ const client = new OpenAI({
 export default function App() {
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
   const [transcript, setTranscript] = useState<string>("");
+  useEventListener(RealtimeAudio, "onPlaybackStarted", () => {
+    console.log("RealtimeAudio playback started event");
+  });
+  useEventListener(RealtimeAudio, "onPlaybackStopped", () => {
+    console.log("RealtimeAudio playback stopped event");
+  });
 
   const playAudio = async () => {
     console.log("Playing audio...");
@@ -132,8 +138,8 @@ export default function App() {
               channelCount: 1,
               interleaved: false
             }}
-            onPlaybackStarted={() => console.log("Playback started Callback")}
-            onPlaybackStopped={() => console.log("Playback stopped Callback")}
+            onPlaybackStarted={() => console.log("RealtimeAudioView playback started callback")}
+            onPlaybackStopped={() => console.log("RealtimeAudioView playback stopped callback")}
             style={styles.view}
           />
         </Group>

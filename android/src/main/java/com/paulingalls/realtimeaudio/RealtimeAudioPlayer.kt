@@ -26,10 +26,6 @@ class RealtimeAudioPlayer(
     var delegate: RealtimeAudioPlayerDelegate? = null
 
     init {
-        initAudioTrack()
-    }
-
-    private fun initAudioTrack() {
         val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
