@@ -13,10 +13,7 @@ class RealtimeAudioPlayer: SharedObject {
     private let playerNode = AVAudioPlayerNode()
     private let inputFormat: AVAudioFormat
     private let outputFormat: AVAudioFormat
-    private let audioConverter: AVAudioConverter
-    private var bufferQueue: [AVAudioPCMBuffer] = []
-    private var currentInputBuffer: AVAudioPCMBuffer?
-    private var currentInputBufferSampleOffset: UInt32 = 0
+    private let converter: RealtimeAudioConverter
     private var isPlaying = false {
         didSet {
             if isPlaying != oldValue {
@@ -39,10 +36,14 @@ class RealtimeAudioPlayer: SharedObject {
         ) else {
             return nil
         }
+        let mixerOutputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
+        let outputFormat = AVAudioFormat(commonFormat: mixerOutputFormat.commonFormat,
+                                         sampleRate: 48000,
+                                         channels: mixerOutputFormat.channelCount,
+                                         interleaved: mixerOutputFormat.isInterleaved)!
         self.inputFormat = inputFormat
-        let outputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
-        self.outputFormat = AVAudioFormat(commonFormat: outputFormat.commonFormat, sampleRate: 48000, channels: outputFormat.channelCount, interleaved: outputFormat.isInterleaved)!
-        self.audioConverter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)!
+        self.outputFormat = outputFormat
+        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat)!
         super.init()
         setupAudioEngine()
     }
@@ -55,8 +56,7 @@ class RealtimeAudioPlayer: SharedObject {
         
         do {
             let buffer = try createBuffer(from: data)
-            
-            bufferQueue.append(buffer)
+            converter.addBuffer(buffer)
             checkAndStartPlayback()
         } catch {
             print("Error creating buffer: \(error.localizedDescription)")
@@ -92,68 +92,23 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     private func checkAndStartPlayback() {
-        guard !isPlaying, !bufferQueue.isEmpty else { return }
+        guard !isPlaying, !converter.isEmpty() else { return }
         isPlaying = true
         startPlayingNextBuffer()
     }
     
     private func startPlayingNextBuffer() {
-        if currentInputBuffer == nil {
-            if bufferQueue.isEmpty {
-                isPlaying = false
-                return;
-            }
-            currentInputBuffer = bufferQueue.removeFirst()
-            currentInputBufferSampleOffset = 0
+        let outputBuffer = converter.getNextBuffer()
+        if outputBuffer == nil {
+            isPlaying = false
+            return
         }
         
-        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: 4096)!
-        
-        var error: NSError?
-        audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
-            let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
-            let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
-            
-            let tempBuffer = AVAudioPCMBuffer(pcmFormat: self.currentInputBuffer!.format,
-                                              frameCapacity: numSamplesNeeded)!
-            tempBuffer.frameLength = numSamplesNeeded
-            
-            let bytesPerFrame = self.currentInputBuffer!.format.streamDescription.pointee.mBytesPerFrame
-            let sourceOffset = self.currentInputBufferSampleOffset * bytesPerFrame
-            let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
-            let destData = tempBuffer.audioBufferList.pointee.mBuffers
-            
-            destData.mData?.copyMemory(from: sourceData.mData!.advanced(by: Int(sourceOffset)),
-                                       byteCount: Int(samplesToCopy * bytesPerFrame))
-            
-            self.currentInputBufferSampleOffset += samplesToCopy
-            
-            if samplesToCopy < numSamplesNeeded {
-                self.currentInputBufferSampleOffset = 0
-                if self.bufferQueue.isEmpty {
-                    self.currentInputBuffer = nil
-                    inputStatus.pointee = .endOfStream
-                    tempBuffer.frameLength = samplesToCopy
-                    self.isPlaying = false
-                    return tempBuffer
-                }
-                self.currentInputBuffer = self.bufferQueue.removeFirst()
-                
-                let samplesRemaining = numSamplesNeeded - samplesToCopy
-                let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
-                destData.mData?.advanced(by: Int(samplesToCopy * bytesPerFrame)).copyMemory(from: sourceData.mData!,
-                                                                                            byteCount: Int(samplesRemaining * bytesPerFrame))
-                self.currentInputBufferSampleOffset += samplesRemaining
-            }
-            inputStatus.pointee = .haveData
-            return tempBuffer
-        }
-        
-        playerNode.scheduleBuffer(outputBuffer, at: nil) { [weak self] in
+        playerNode.scheduleBuffer(outputBuffer!, at: nil) { [weak self] in
             self?.startPlayingNextBuffer()
         }
         
-        delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer)
+        delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer!)
         
         if !playerNode.isPlaying {
             playerNode.play()
@@ -162,7 +117,7 @@ class RealtimeAudioPlayer: SharedObject {
     
     func stop() {
         playerNode.stop()
-        bufferQueue.removeAll()
+        converter.clear()
         isPlaying = false
     }
     
@@ -172,7 +127,7 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     func resume() {
-        if !bufferQueue.isEmpty {
+        if !converter.isEmpty() {
             isPlaying = true
             if !playerNode.isPlaying {
                 startPlayingNextBuffer()

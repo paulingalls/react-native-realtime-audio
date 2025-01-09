@@ -2,4 +2,6 @@
 // and on native platforms to RealtimeAudioModule.ts
 export { default } from './RealtimeAudioModule';
 export { default as RealtimeAudioView } from './RealtimeAudioView';
-export * from  './RealtimeAudio.types';
+export * from './RealtimeAudio.types';
+export * from './RealtimeAudioPlayer';
+export * from './RealtimeAudioRecorder';

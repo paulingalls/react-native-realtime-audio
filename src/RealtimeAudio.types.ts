@@ -4,10 +4,11 @@ import { Ref } from "react";
 export type RealtimeAudioModuleEvents = {
   onPlaybackStarted: () => void;
   onPlaybackStopped: () => void;
+  onAudioCaptured: (payload: AudioCapturedEventPayload) => void;
 };
 
-export type ChangeEventPayload = {
-  value: string;
+export type AudioCapturedEventPayload = {
+  audioBuffer: string;
 };
 
 export type RealtimeAudioViewRef = {
@@ -21,7 +22,6 @@ export enum AudioEncoding {
   pcm16bitInteger = "pcm16bitInteger",
   pcm32bitInteger = "pcm32bitInteger",
   pcm32bitFloat = "pcm32bitFloat",
-  pcm64bitFloat = "pcm64bitFloat",
 }
 
 export type AudioFormat = {

@@ -1,7 +1,12 @@
-import { useEventListener } from "expo";
-import RealtimeAudio, { AudioEncoding, RealtimeAudioView, RealtimeAudioViewRef } from "react-native-realtime-audio";
+import { useEvent, useEventListener } from "expo";
+import RealtimeAudio, {
+  AudioEncoding,
+  RealtimeAudioView,
+  RealtimeAudioViewRef,
+  RealtimeAudioPlayer, RealtimeAudioRecorder
+} from "react-native-realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import OpenAI from "openai-react-native";
 
 const client = new OpenAI({
@@ -11,7 +16,14 @@ const client = new OpenAI({
 
 export default function App() {
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
+  const recorderRef = useRef<RealtimeAudioRecorder>(new RealtimeAudio.RealtimeAudioRecorder({
+    sampleRate: 24000,
+    encoding: AudioEncoding.pcm16bitInteger,
+    channelCount: 1,
+    interleaved: false
+  }));
   const [transcript, setTranscript] = useState<string>("");
+  const audioPayload = useEvent(RealtimeAudio, "onAudioCaptured");
   useEventListener(RealtimeAudio, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
   });
@@ -19,10 +31,20 @@ export default function App() {
     console.log("RealtimeAudio playback stopped event");
   });
 
+  const recordAudio = async () => {
+    console.log("Recording audio...");
+    await recorderRef.current.startRecording();
+  }
+
+  const topRecordingAudio = async () => {
+    console.log("Stopping recording audio...");
+    await recorderRef.current.stopRecording();
+  }
+
   const playAudio = async () => {
     console.log("Playing audio...");
     setTranscript("");
-    const player = new RealtimeAudio.RealtimeAudioPlayer({
+    const player: RealtimeAudioPlayer = new RealtimeAudio.RealtimeAudioPlayer({
       sampleRate: 24000,
       encoding: AudioEncoding.pcm16bitInteger,
       channelCount: 1,
@@ -67,7 +89,6 @@ export default function App() {
     );
   };
 
-
   const playAudioInView = async () => {
     console.log("Playing audio in view...");
     setTranscript("");
@@ -110,10 +131,28 @@ export default function App() {
     );
   };
 
+  useEffect(() => {
+    console.log("new audio payload", audioPayload);
+  }, [audioPayload]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
+        <Group name="RealtimeAudioRecorder">
+          <Button
+            title="Record Audio"
+            onPress={async () => {
+              await recordAudio();
+            }}
+          />
+          <Button
+            title="Stop Recording Audio"
+            onPress={async () => {
+              await topRecordingAudio();
+            }}
+          />
+        </Group>
         <Group name="RealtimeAudioPlayer">
           <Button
             title="Play Audio"
@@ -181,6 +220,6 @@ const styles = {
   },
   view: {
     flex: 1,
-    height: 100,
+    height: 100
   }
 };

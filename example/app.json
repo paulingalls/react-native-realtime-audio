@@ -12,6 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [["../app.plugin.js", { "microphonePermission": "Allow Example to record audio" }]],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.paulingalls.realtimeaudio.example"

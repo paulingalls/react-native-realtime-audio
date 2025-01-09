@@ -14,13 +14,18 @@ struct AudioFormatSettings: Record {
     @Field public var interleaved: Bool = false
 }
 
-public class RealtimeAudioModule: Module, RealtimeAudioPlayerDelegate {
+public class RealtimeAudioModule:
+    Module, RealtimeAudioPlayerDelegate, RealtimeAudioRecorderDelegate {
     var hasListeners: Bool = false
     
     public func definition() -> ModuleDefinition {
         Name("RealtimeAudio")
         
-        Events("onPlaybackStarted", "onPlaybackStopped")
+        Events("onPlaybackStarted", "onPlaybackStopped", "onAudioCaptured")
+        
+        OnCreate {
+            configureAudioSession()
+        }
 
         OnStartObserving {
             hasListeners = true
@@ -58,6 +63,29 @@ public class RealtimeAudioModule: Module, RealtimeAudioPlayerDelegate {
             
             AsyncFunction("stop") { (player: RealtimeAudioPlayer) in
                 player.stop()
+            }
+        }
+        
+        Class(RealtimeAudioRecorder.self) {
+            Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioRecorder in
+                let recorder: RealtimeAudioRecorder = RealtimeAudioRecorder(sampleRate: audioFormat.sampleRate,
+                                                                            channelCount: audioFormat.channelCount,
+                                                                            audioFormat: getCommonFormat(audioFormat.encoding))!
+                recorder.delegate = self
+                return recorder
+            }
+            
+            AsyncFunction("startRecording") { (recorder: RealtimeAudioRecorder) in
+                do {
+                    try await recorder.startRecording()
+                } catch {
+                    print("Error starting recording: \(error.localizedDescription)")
+                }
+
+            }
+
+            AsyncFunction("stopRecording") { (recorder: RealtimeAudioRecorder) in
+                recorder.stopRecording()
             }
         }
         
@@ -108,6 +136,11 @@ public class RealtimeAudioModule: Module, RealtimeAudioPlayerDelegate {
         }
     }
     
+    func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String) {
+        let event = ["audioBuffer": didCaptureAudioData]
+        sendEvent("onAudioCaptured", event)
+    }
+    
     func audioPlayerDidStartPlaying() {
         sendEvent("onPlaybackStarted")
     }
@@ -130,5 +163,12 @@ public class RealtimeAudioModule: Module, RealtimeAudioPlayerDelegate {
         case .pcm64bitFloat:
             return .pcmFormatFloat64
         }
+    }
+    
+    private func configureAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, options: [.mixWithOthers, .defaultToSpeaker])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch { }
     }
 }
