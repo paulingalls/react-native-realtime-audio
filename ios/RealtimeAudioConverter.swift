@@ -8,12 +8,13 @@ class RealtimeAudioConverter: @unchecked Sendable {
     private var bufferQueue: [AVAudioPCMBuffer] = []
     private var currentInputBuffer: AVAudioPCMBuffer?
     private var currentInputBufferSampleOffset: UInt32 = 0
+    private var frameSize: UInt32 = 2048
 
-    init?(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat) {
+    init?(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat, frameSize: UInt32) {
         self.inputFormat = inputFormat
         self.outputFormat = outputFormat
-        let converter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)
-        self.audioConverter = converter!
+        self.frameSize = frameSize
+        self.audioConverter = AVAudioConverter(from: self.inputFormat, to: self.outputFormat)!
     }
     
     func addBuffer(_ buffer: AVAudioPCMBuffer) {
@@ -37,7 +38,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
             currentInputBufferSampleOffset = 0
         }
 
-        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: 1200)!
+        let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: frameSize)!
         var error: NSError?
         audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
             let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
