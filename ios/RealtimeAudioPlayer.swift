@@ -43,7 +43,7 @@ class RealtimeAudioPlayer: SharedObject {
                                          interleaved: mixerOutputFormat.isInterleaved)!
         self.inputFormat = inputFormat
         self.outputFormat = outputFormat
-        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat)!
+        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 4096)!
         super.init()
         setupAudioEngine()
     }

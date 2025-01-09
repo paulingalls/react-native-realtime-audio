@@ -52,7 +52,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
         let semaphore = DispatchSemaphore(value: 0)
         let inputFormat = inputNode.outputFormat(forBus: 0)
         print("Input format: \(inputFormat.sampleRate), \(inputFormat.channelCount), \(inputFormat.commonFormat)")
-        let audioConvertor = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat)!
+        let audioConvertor = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 1200)!
         
         let tapBlock: AVAudioNodeTapBlock = { (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
             audioConvertor.addBuffer(buffer)
