@@ -5,7 +5,7 @@ import AVFoundation
 public class RealtimeAudioView: ExpoView {
     private var audioPlayer: RealtimeAudioPlayer?
     private var visualization: AudioVisualization
-    private var sampleCount = 100
+    private var sampleCount = 200
 
     // Audio format properties
     private var sampleRate: Double = 24000
