@@ -4,9 +4,8 @@ import AVFoundation
 
 public class RealtimeAudioView: ExpoView {
     private var audioPlayer: RealtimeAudioPlayer?
-    private let waveformLayer = CAShapeLayer()
+    private var visualization: AudioVisualization
     private var sampleCount = 100
-    private var waveformColor: UIColor = .blue
 
     // Audio format properties
     private var sampleRate: Double = 24000
@@ -18,8 +17,9 @@ public class RealtimeAudioView: ExpoView {
     let onPlaybackStopped = EventDispatcher()
 
     public required init(appContext: AppContext? = nil) {
+        self.visualization = WaveformVisualization(sampleCount: sampleCount)
         super.init(appContext: appContext)
-        setupWaveformLayer()
+        setupVisualization()
     }
 
     required init?(coder: NSCoder) {
@@ -37,41 +37,15 @@ public class RealtimeAudioView: ExpoView {
         audioPlayer?.delegate = self
     }
 
-    private func setupWaveformLayer() {
-        waveformLayer.strokeColor = waveformColor.cgColor
-        waveformLayer.fillColor = nil
-        waveformLayer.lineWidth = 2.0
-        layer.addSublayer(waveformLayer)
+    private func setupVisualization() {
+        layer.addSublayer(visualization.layer)
     }
 
     public override func layoutSubviews() {
         super.layoutSubviews()
-        waveformLayer.frame = bounds
-        updateWaveformPath()
+        visualization.setFrame(bounds)
     }
-
-    private func updateWaveformPath() {
-        guard let samples = currentSamples else { return }
-
-        let path = UIBezierPath()
-        let width = bounds.width
-        let height = bounds.height
-        let midPoint = height / 2
-        let sampleWidth = width / CGFloat(samples.count)
-
-        for (index, sample) in samples.enumerated() {
-            let x = CGFloat(index) * sampleWidth
-            let sampleHeight = CGFloat(sample) * height
-
-            path.move(to: CGPoint(x: x, y: midPoint - sampleHeight/2))
-            path.addLine(to: CGPoint(x: x, y: midPoint + sampleHeight/2))
-        }
-
-        waveformLayer.path = path.cgPath
-    }
-
-    private var currentSamples: [Float]?
-
+    
     // MARK: - Public Methods
 
     @objc
@@ -109,41 +83,13 @@ public class RealtimeAudioView: ExpoView {
 
     @objc
     func setWaveformColor(_ hexColor: UIColor) {
-        waveformLayer.strokeColor = hexColor.cgColor
+        visualization.setColor(hexColor)
     }
 
-    private func updateWaveformSamples(from buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData else {
-            print("Error: Could not access float channel data")
-            return
-        }
-        
-        let channelCount = Int(buffer.format.channelCount)
-        let frameLength = Int(buffer.frameLength)
-        let strideLength = max(1, frameLength / sampleCount)
-        
-        var samples: [Float] = []
-        
-        for i in stride(from: 0, to: frameLength, by: strideLength) {
-            var sample: Float = 0
-            for channel in 0..<channelCount {
-                sample += abs(channelData[channel][i])
-            }
-            sample /= Float(channelCount)
-            samples.append(sample)
-        }
-        
-        // Adjust sample count if necessary
-        while samples.count > sampleCount {
-            samples.removeLast()
-        }
-        while samples.count < sampleCount {
-            samples.append(0)
-        }
-        
-        currentSamples = samples
+    private func updateVisualizationSamples(from buffer: AVAudioPCMBuffer) {
+        let samples = self.visualization.getSamplesFromAudio(buffer)
         DispatchQueue.main.async { [weak self] in
-            self?.updateWaveformPath()
+            self?.visualization.updateVisualization(with: samples)
         }
     }
 }
@@ -158,6 +104,6 @@ extension RealtimeAudioView: RealtimeAudioPlayerDelegate {
     }
     
     func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer) {
-        updateWaveformSamples(from: buffer)
+        updateVisualizationSamples(from: buffer)
     }
 }
