@@ -1,9 +1,14 @@
 import { useEvent, useEventListener } from "expo";
-import RealtimeAudio, {
+import {
+  RealtimeAudioModule,
+  RealtimeAudioRecorderModule,
   AudioEncoding,
   RealtimeAudioView,
+  RealtimeAudioRecorderView,
   RealtimeAudioViewRef,
-  RealtimeAudioPlayer, RealtimeAudioRecorder
+  RealtimeAudioPlayer,
+  RealtimeAudioRecorder,
+  RealtimeAudioRecorderViewRef, RealtimeAudioCapturedEventPayload
 } from "react-native-realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
@@ -16,40 +21,41 @@ const client = new OpenAI({
 
 export default function App() {
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
-  const recorderRef = useRef<RealtimeAudioRecorder>(new RealtimeAudio.RealtimeAudioRecorder({
+  const recorderViewRef = useRef<RealtimeAudioRecorderViewRef>(null);
+  const recorderRef = useRef<RealtimeAudioRecorder>(new RealtimeAudioRecorderModule.RealtimeAudioRecorder({
+    sampleRate: 24000,
+    encoding: AudioEncoding.pcm16bitInteger,
+    channelCount: 1,
+    interleaved: false
+  }));
+  const playerRef = useRef<RealtimeAudioPlayer>(new RealtimeAudioModule.RealtimeAudioPlayer({
     sampleRate: 24000,
     encoding: AudioEncoding.pcm16bitInteger,
     channelCount: 1,
     interleaved: false
   }));
   const [transcript, setTranscript] = useState<string>("");
-  const audioPayload = useEvent(RealtimeAudio, "onAudioCaptured");
-  useEventListener(RealtimeAudio, "onPlaybackStarted", () => {
+  const audioPayload = useEvent(RealtimeAudioRecorderModule, "onAudioCaptured");
+  useEventListener(RealtimeAudioModule, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
   });
-  useEventListener(RealtimeAudio, "onPlaybackStopped", () => {
+  useEventListener(RealtimeAudioModule, "onPlaybackStopped", () => {
     console.log("RealtimeAudio playback stopped event");
   });
 
   const recordAudio = async () => {
     console.log("Recording audio...");
     await recorderRef.current.startRecording();
-  }
+  };
 
-  const topRecordingAudio = async () => {
+  const stopRecordingAudio = async () => {
     console.log("Stopping recording audio...");
     await recorderRef.current.stopRecording();
-  }
+  };
 
   const playAudio = async () => {
     console.log("Playing audio...");
     setTranscript("");
-    const player: RealtimeAudioPlayer = new RealtimeAudio.RealtimeAudioPlayer({
-      sampleRate: 24000,
-      encoding: AudioEncoding.pcm16bitInteger,
-      channelCount: 1,
-      interleaved: false
-    });
     client.chat.completions.stream(
       {
         model: "gpt-4o-audio-preview",
@@ -74,7 +80,7 @@ export default function App() {
             setTranscript((prev) => prev + audio?.transcript);
           }
           if (audio?.data) {
-            player.addBuffer(audio?.data);
+            playerRef.current?.addBuffer(audio?.data);
           }
         }
       },
@@ -135,39 +141,127 @@ export default function App() {
     console.log("new audio payload", audioPayload);
   }, [audioPayload]);
 
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const result = await RealtimeAudioModule.checkAndRequestAudioPermissions();
+      console.log("Permissions result", result);
+    };
+    checkPermissions().then(() => console.log("Permissions checked."));
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
         <Group name="RealtimeAudioRecorder">
-          <Button
-            title="Record Audio"
-            onPress={async () => {
-              await recordAudio();
+          <View style={{ flexDirection: "row" }}>
+            <Button
+              title="Record Audio"
+              onPress={async () => {
+                await recordAudio();
+              }}
+            />
+            <Button
+              title="Stop"
+              onPress={async () => {
+                await stopRecordingAudio();
+              }}
+            />
+          </View>
+        </Group>
+        <Group name="RealtimeAudioRecorderView">
+          <View style={{ flexDirection: "row" }}>
+            <Button
+              title="Record Audio"
+              onPress={() => {
+                console.log("Starting recording in view...", recorderViewRef.current);
+                recorderViewRef.current?.startRecording();
+                console.log("Recording started in view.");
+              }}
+            />
+            <Button
+              title="Stop"
+              onPress={() => {
+                console.log("Stopping recording in view...");
+                recorderViewRef.current?.stopRecording();
+              }}
+            />
+          </View>
+          <RealtimeAudioRecorderView
+            ref={recorderViewRef}
+            waveformColor={"#0F0"}
+            audioFormat={{
+              sampleRate: 24000,
+              encoding: AudioEncoding.pcm16bitInteger,
+              channelCount: 1,
+              interleaved: false
             }}
-          />
-          <Button
-            title="Stop Recording Audio"
-            onPress={async () => {
-              await topRecordingAudio();
-            }}
+            onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) =>
+              console.log("RealtimeAudioRecorderView audio captured callback", event.nativeEvent.audioBuffer)}
+            style={styles.view}
           />
         </Group>
         <Group name="RealtimeAudioPlayer">
-          <Button
-            title="Play Audio"
-            onPress={async () => {
-              await playAudio();
-            }}
-          />
+          <View style={{ flexDirection: "row" }}>
+            <Button
+              title="Play"
+              onPress={async () => {
+                await playAudio();
+              }}
+            />
+            <Button
+              title="Pause"
+              onPress={() => {
+                console.log("Pausing playback...");
+                playerRef.current?.pause();
+              }}
+            />
+            <Button
+              title="Resume"
+              onPress={() => {
+                console.log("Resuming playback...");
+                playerRef.current?.resume();
+              }}
+            />
+            <Button
+              title="Stop"
+              onPress={() => {
+                console.log("Stopping playback...");
+                playerRef.current?.stop();
+              }}
+            />
+          </View>
         </Group>
         <Group name="RealtimeAudioView">
-          <Button
-            title="Play Audio In View"
-            onPress={async () => {
-              await playAudioInView();
-            }}
-          />
+          <View style={{ flexDirection: "row" }}>
+            <Button
+              title="Play"
+              onPress={async () => {
+                await playAudioInView();
+              }}
+            />
+            <Button
+              title="Pause"
+              onPress={() => {
+                console.log("Pausing playback...");
+                audioViewRef.current?.pause();
+              }}
+            />
+            <Button
+              title="Resume"
+              onPress={() => {
+                console.log("Resuming playback...");
+                audioViewRef.current?.resume();
+              }}
+            />
+            <Button
+              title="Stop"
+              onPress={() => {
+                console.log("Stopping playback in view...");
+                audioViewRef.current?.stop();
+              }}
+            />
+          </View>
           <RealtimeAudioView
             ref={audioViewRef}
             waveformColor={"#F00"}

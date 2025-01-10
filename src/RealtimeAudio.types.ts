@@ -4,10 +4,13 @@ import { Ref } from "react";
 export type RealtimeAudioModuleEvents = {
   onPlaybackStarted: () => void;
   onPlaybackStopped: () => void;
-  onAudioCaptured: (payload: AudioCapturedEventPayload) => void;
 };
 
-export type AudioCapturedEventPayload = {
+export type RealtimeAudioRecorderModuleEvents = {
+  onAudioCaptured: (payload: RealtimeAudioCapturedEventPayload) => void;
+}
+
+export type RealtimeAudioCapturedEventPayload = {
   audioBuffer: string;
 };
 
@@ -16,6 +19,11 @@ export type RealtimeAudioViewRef = {
   resume: () => void;
   stop: () => void;
   addBuffer: (base64EncodedAudio: string) => void;
+}
+
+export type RealtimeAudioRecorderViewRef = {
+  startRecording: () => void;
+  stopRecording: () => void;
 }
 
 export enum AudioEncoding {
@@ -37,4 +45,11 @@ export type RealtimeAudioViewProps = {
   waveformColor?: string;
   onPlaybackStarted?: () => void;
   onPlaybackStopped?: () => void;
+} & ViewProps;
+
+export type RealtimeAudioRecorderViewProps = {
+  audioFormat: AudioFormat;
+  ref?: Ref<RealtimeAudioRecorderViewRef>;
+  waveformColor?: string;
+  onAudioCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
 } & ViewProps;

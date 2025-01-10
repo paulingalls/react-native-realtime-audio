@@ -14,6 +14,7 @@ class WaveformVisualization: AudioVisualization {
     }
     
     private func setupWaveformLayer() {
+        waveformLayer.strokeColor = UIColor.blue.cgColor
         waveformLayer.fillColor = nil
         waveformLayer.lineWidth = 2.0
     }
@@ -58,14 +59,19 @@ class WaveformVisualization: AudioVisualization {
         let midPoint = height / 2
         let sampleWidth = width / CGFloat(samples.count)
         
+        var maxHeight: CGFloat = 0
+        
         for (index, sample) in samples.enumerated() {
             let x = CGFloat(index) * sampleWidth
             let sampleHeight = CGFloat(sample) * height
+            if sampleHeight > maxHeight {
+                maxHeight = sampleHeight
+            }
             
             path.move(to: CGPoint(x: x, y: midPoint - sampleHeight/2))
             path.addLine(to: CGPoint(x: x, y: midPoint + sampleHeight/2))
         }
-        
+        print("maxHeight: \(maxHeight)")
         waveformLayer.path = path.cgPath
     }
     

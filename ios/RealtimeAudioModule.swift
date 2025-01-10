@@ -1,3 +1,4 @@
+import AVFoundation
 import ExpoModulesCore
 
 enum AudioEncoding: String, Enumerable {
@@ -15,13 +16,13 @@ struct AudioFormatSettings: Record {
 }
 
 public class RealtimeAudioModule:
-    Module, RealtimeAudioPlayerDelegate, RealtimeAudioRecorderDelegate {
+    Module, RealtimeAudioPlayerDelegate {
     var hasListeners: Bool = false
     
     public func definition() -> ModuleDefinition {
         Name("RealtimeAudio")
         
-        Events("onPlaybackStarted", "onPlaybackStopped", "onAudioCaptured")
+        Events("onPlaybackStarted", "onPlaybackStopped")
         
         OnCreate {
             configureAudioSession()
@@ -33,6 +34,11 @@ public class RealtimeAudioModule:
 
         OnStopObserving {
             hasListeners = false
+        }
+        
+        AsyncFunction("checkAndRequestAudioPermissions") {
+            let hasPermissions = await checkAndRequestAudioPermissions()
+            return hasPermissions
         }
         
         Class(RealtimeAudioPlayer.self) {
@@ -66,31 +72,6 @@ public class RealtimeAudioModule:
             }
         }
         
-        Class(RealtimeAudioRecorder.self) {
-            Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioRecorder in
-                let recorder: RealtimeAudioRecorder = RealtimeAudioRecorder(sampleRate: audioFormat.sampleRate,
-                                                                            channelCount: audioFormat.channelCount,
-                                                                            audioFormat: getCommonFormat(audioFormat.encoding))!
-                recorder.delegate = self
-                return recorder
-            }
-            
-            AsyncFunction("startRecording") { (recorder: RealtimeAudioRecorder) in
-                do {
-                    try await recorder.startRecording()
-                } catch {
-                    print("Error starting recording: \(error.localizedDescription)")
-                }
-
-            }
-
-            AsyncFunction("stopRecording") { (recorder: RealtimeAudioRecorder) in
-                recorder.stopRecording()
-            }
-        }
-        
-        // Enables the module to be used as a native view. Definition components that are accepted as part of the
-        // view definition: Prop, Events.
         View(RealtimeAudioView.self) {
             Events("onPlaybackStarted", "onPlaybackStopped")
 
@@ -136,17 +117,12 @@ public class RealtimeAudioModule:
         }
     }
     
-    func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String) {
-        let event = ["audioBuffer": didCaptureAudioData]
-        sendEvent("onAudioCaptured", event)
-    }
-    
     func audioPlayerDidStartPlaying() {
-        sendEvent("onPlaybackStarted")
+        if hasListeners { sendEvent("onPlaybackStarted") }
     }
     
     func audioPlayerDidStopPlaying() {
-        sendEvent("onPlaybackStopped")
+        if hasListeners { sendEvent("onPlaybackStopped") }
     }
     
     func audioPlayerBufferDidBecomeAvailable(_ buffer: AVAudioPCMBuffer) {
@@ -163,6 +139,23 @@ public class RealtimeAudioModule:
         case .pcm64bitFloat:
             return .pcmFormatFloat64
         }
+    }
+    
+    private func checkAndRequestAudioPermissions() async -> Bool  {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .notDetermined:
+            let granted = await AVCaptureDevice.requestAccess(for: .audio)
+            guard granted else {
+                print("Permission denied")
+                return false
+            }
+            return true
+        default:
+            print("Permission denied")
+        }
+        return false
     }
     
     private func configureAudioSession() {

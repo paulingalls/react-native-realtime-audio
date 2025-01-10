@@ -3,6 +3,7 @@ import ExpoModulesCore
 
 protocol RealtimeAudioRecorderDelegate: AnyObject {
     func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String)
+    func bufferCaptured(_ buffer: AVAudioPCMBuffer)
 }
 
 class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
@@ -10,13 +11,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     private var inputNode: AVAudioInputNode
     private let outputFormat: AVAudioFormat
     private var isRecording: Bool = false
-    
-    enum AudioRecorderError: Error {
-        case engineStartFailed
-        case permissionDenied
-        case formatError
-    }
-    
+     
     init?(sampleRate: Double = 24000,
           channelCount: UInt32 = 1,
           audioFormat: AVAudioCommonFormat = .pcmFormatInt16) {
@@ -34,20 +29,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     
     weak var delegate: RealtimeAudioRecorderDelegate?
     
-    func startRecording() async throws {
-        // Check microphone permission
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized:
-            break
-        case .notDetermined:
-            let granted = await AVCaptureDevice.requestAccess(for: .audio)
-            guard granted else {
-                throw AudioRecorderError.permissionDenied
-            }
-        default:
-            throw AudioRecorderError.permissionDenied
-        }
-        
+    func startRecording() throws {
         isRecording = true
         let semaphore = DispatchSemaphore(value: 0)
         let inputFormat = inputNode.outputFormat(forBus: 0)
@@ -56,10 +38,11 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
         
         let tapBlock: AVAudioNodeTapBlock = { (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
             audioConvertor.addBuffer(buffer)
+            self.delegate?.bufferCaptured(buffer)
             semaphore.signal()
         }
         
-        DispatchQueue.global(qos: .default).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
+        DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
             while self.isRecording {
                 semaphore.wait()
                 let outputBuffer = audioConvertor.getNextBuffer()
@@ -115,7 +98,6 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
             try audioEngine.start()
         } catch {
             print("Error starting audio engine: \(error.localizedDescription)")
-            throw AudioRecorderError.engineStartFailed
         }
     }
     
