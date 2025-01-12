@@ -1,7 +1,5 @@
 package com.paulingalls.realtimeaudio
 
-import RealtimeAudioPlayer
-import RealtimeAudioPlayerDelegate
 import android.content.Context
 import android.graphics.Canvas
 import convertByteArrayToFloatArray
@@ -9,24 +7,24 @@ import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 
-class RealtimeAudioView(
-    context: Context, appContext: AppContext
+class RealtimeAudioRecorderView(
+    context: Context,
+    appContext: AppContext
 ) : ExpoView(context, appContext),
-    RealtimeAudioPlayerDelegate {
-    private val onPlaybackStarted by EventDispatcher()
-    private val onPlaybackStopped by EventDispatcher()
-    private var audioPlayer: RealtimeAudioPlayer? = null
+    RealtimeAudioBufferDelegate {
+    private val onAudioCaptured by EventDispatcher<Map<String, String>>()
+    private var audioRecorder: RealtimeAudioRecorder? = null
     private var visualization: AudioVisualization = WaveformVisualization()
-    private var isPlaying = false
+    private var isRecording = false
 
     init {
         setWillNotDraw(false)
     }
 
     fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
-        audioPlayer?.release()
-        audioPlayer = RealtimeAudioPlayer(sampleRate, channelConfig, audioFormat).apply {
-            delegate = this@RealtimeAudioView
+        audioRecorder?.release()
+        audioRecorder = RealtimeAudioRecorder(sampleRate, channelConfig, audioFormat).apply {
+            delegate = this@RealtimeAudioRecorderView
         }
     }
 
@@ -35,33 +33,20 @@ class RealtimeAudioView(
         invalidate()
     }
 
-    fun addAudioBuffer(base64EncodedBuffer: String) {
-        audioPlayer?.addBuffer(base64EncodedBuffer)
-    }
-
-    fun stopPlayback() {
-        audioPlayer?.stopPlayback()
-    }
-
-    fun pausePlayback() {
-        audioPlayer?.pausePlayback()
-    }
-
-    fun resumePlayback() {
-        audioPlayer?.resumePlayback()
-    }
-
-    override fun playbackStarted() {
-        isPlaying = true
-        onPlaybackStarted(mapOf())
-        invalidate()
-    }
-
-    override fun playbackStopped() {
-        isPlaying = false
-        onPlaybackStopped(mapOf())
-        visualization.updateData(FloatArray(0))
+    fun startRecording() {
+        isRecording = true
+        audioRecorder?.startRecording()
         postInvalidate()
+    }
+
+    fun stopRecording() {
+        isRecording = false
+        audioRecorder?.stopRecording()
+        postInvalidate()
+    }
+
+    override fun audioStringReady(base64Audio: String) {
+        onAudioCaptured(mapOf("audioBuffer" to base64Audio))
     }
 
     override fun bufferReady(buffer: ByteArray) {
@@ -72,7 +57,7 @@ class RealtimeAudioView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (isPlaying) {
+        if (isRecording) {
             visualization.draw(canvas, width.toFloat(), height.toFloat())
         }
     }
@@ -86,6 +71,7 @@ class RealtimeAudioView(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        audioPlayer?.release()
+        audioRecorder?.release()
     }
+
 }

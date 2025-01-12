@@ -154,7 +154,7 @@ export default function App() {
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
         <Group name="RealtimeAudioRecorder">
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
             <Button
               title="Record Audio"
               onPress={async () => {
@@ -170,7 +170,7 @@ export default function App() {
           </View>
         </Group>
         <Group name="RealtimeAudioRecorderView">
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
             <Button
               title="Record Audio"
               onPress={() => {
@@ -202,7 +202,7 @@ export default function App() {
           />
         </Group>
         <Group name="RealtimeAudioPlayer">
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Button
               title="Play"
               onPress={async () => {
@@ -233,7 +233,7 @@ export default function App() {
           </View>
         </Group>
         <Group name="RealtimeAudioView">
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Button
               title="Play"
               onPress={async () => {
