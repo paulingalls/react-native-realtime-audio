@@ -12,7 +12,6 @@ struct AudioFormatSettings: Record {
     @Field public var sampleRate: Double = 24000
     @Field public var encoding: AudioEncoding = .pcm16bitInteger
     @Field public var channelCount: UInt32 = 1
-    @Field public var interleaved: Bool = false
 }
 
 public class RealtimeAudioModule:

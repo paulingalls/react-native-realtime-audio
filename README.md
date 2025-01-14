@@ -20,7 +20,7 @@ npx expo install react-native-realtime-audio
 
 ## Components
 
-### RealtimeAudioView
+### RealtimeAudioPlayerView
 
 Extends the functionality of RealtimeAudioPlayer by adding a visual waveform representation of the audio being played.
 
@@ -30,7 +30,6 @@ AudioFormat:
 - `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
 - `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
 - `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
-- `interleaved` (boolean): For multichannel, whether the audio data is interleaved (default: true)
 
 Other Props:
 - `waveformColor` (string): Color of the waveform (default: '#00F')

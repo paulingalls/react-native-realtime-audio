@@ -11,7 +11,6 @@ public class RealtimeAudioPlayerView: ExpoView {
     private var sampleRate: Double = 24000
     private var commonFormat: AVAudioCommonFormat = .pcmFormatInt16
     private var channels: UInt32 = 1
-    private var interleaved: Bool = false
     
     let onPlaybackStarted = EventDispatcher()
     let onPlaybackStopped = EventDispatcher()
@@ -31,8 +30,7 @@ public class RealtimeAudioPlayerView: ExpoView {
         audioPlayer = RealtimeAudioPlayer(
             sampleRate: sampleRate,
             commonFormat: commonFormat,
-            channels: channels,
-            interleaved: interleaved
+            channels: channels
         )
         audioPlayer?.delegate = self
     }
@@ -71,11 +69,10 @@ public class RealtimeAudioPlayerView: ExpoView {
     // MARK: - Configuration Methods
 
     @objc
-    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32, interleaved: Bool) {
+    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
         self.sampleRate = sampleRate
         self.commonFormat = commonFormat
         self.channels = channels
-        self.interleaved = interleaved
 
         // Recreate audio player with new settings
         setupAudioPlayer()

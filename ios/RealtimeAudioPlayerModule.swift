@@ -9,11 +9,11 @@ public class RealtimeAudioPlayerModule:
         Name("RealtimeAudioPlayer")
         
         Events("onPlaybackStarted", "onPlaybackStopped")
-
+        
         OnStartObserving {
             hasListeners = true
         }
-
+        
         OnStopObserving {
             hasListeners = false
         }
@@ -21,9 +21,8 @@ public class RealtimeAudioPlayerModule:
         Class(RealtimeAudioPlayer.self) {
             Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioPlayer in
                 let player: RealtimeAudioPlayer = RealtimeAudioPlayer(sampleRate: audioFormat.sampleRate,
-                                                                             commonFormat: getCommonFormat(audioFormat.encoding),
-                                                                             channels: audioFormat.channelCount,
-                                                                             interleaved: audioFormat.interleaved)!
+                                                                      commonFormat: getCommonFormat(audioFormat.encoding),
+                                                                      channels: audioFormat.channelCount)!
                 player.delegate = self
                 return player
             }
@@ -51,7 +50,7 @@ public class RealtimeAudioPlayerModule:
         
         View(RealtimeAudioPlayerView.self) {
             Events("onPlaybackStarted", "onPlaybackStopped")
-
+            
             // Props
             Prop("waveformColor") { (
                 view: RealtimeAudioPlayerView,
@@ -65,11 +64,10 @@ public class RealtimeAudioPlayerModule:
                 format: AudioFormatSettings
             ) in
                 view.setAudioFormat(
-                        sampleRate: format.sampleRate,
-                        commonFormat: self.getCommonFormat(format.encoding),
-                        channels: format.channelCount,
-                        interleaved: format.interleaved
-                    )
+                    sampleRate: format.sampleRate,
+                    commonFormat: self.getCommonFormat(format.encoding),
+                    channels: format.channelCount
+                )
             }
             
             // Functions

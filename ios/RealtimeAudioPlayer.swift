@@ -28,11 +28,11 @@ class RealtimeAudioPlayer: SharedObject {
     
     weak var delegate: RealtimeAudioPlayerDelegate?
     
-    init?(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32 = 1, interleaved: Bool = false) {
+    init?(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32 = 1) {
         guard let inputFormat = AVAudioFormat(commonFormat: commonFormat,
                                               sampleRate: sampleRate,
                                               channels: AVAudioChannelCount(channels),
-                                              interleaved: interleaved
+                                              interleaved: true
         ) else {
             return nil
         }

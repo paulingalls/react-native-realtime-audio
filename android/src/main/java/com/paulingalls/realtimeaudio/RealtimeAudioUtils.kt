@@ -23,9 +23,6 @@ class AudioFormatSettings : Record {
 
     @Field
     val channelCount: Int = 1
-
-    @Field
-    val interleaved: Boolean? = null
 }
 
 fun getAndroidColor(hexString: String): Int {
