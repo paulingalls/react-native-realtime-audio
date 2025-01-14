@@ -8,6 +8,7 @@ export type RealtimeAudioModuleEvents = {
 
 export type RealtimeAudioRecorderModuleEvents = {
   onAudioCaptured: (payload: RealtimeAudioCapturedEventPayload) => void;
+  onCaptureComplete: () => void;
 }
 
 export type RealtimeAudioCapturedEventPayload = {
@@ -52,4 +53,5 @@ export type RealtimeAudioRecorderViewProps = {
   ref?: Ref<RealtimeAudioRecorderViewRef>;
   waveformColor?: string;
   onAudioCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
+  onCaptureComplete?: () => void;
 } & ViewProps;

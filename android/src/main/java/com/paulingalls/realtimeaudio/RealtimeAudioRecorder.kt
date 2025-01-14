@@ -12,6 +12,7 @@ import java.nio.ByteBuffer
 interface RealtimeAudioBufferDelegate {
     fun audioStringReady(base64Audio: String)
     fun bufferReady(buffer: ByteArray)
+    fun captureComplete()
 }
 
 class RealtimeAudioRecorder(
@@ -50,6 +51,7 @@ class RealtimeAudioRecorder(
             release()
         }
         audioRecord = null
+        delegate?.captureComplete()
     }
 
     @SuppressLint("MissingPermission")
@@ -68,7 +70,7 @@ class RealtimeAudioRecorder(
             val buffer = ByteBuffer.allocateDirect(bufferSize)
             val byteArray = ByteArray(bufferSize)
 
-            while (isRecording && isActive) {
+            while (isActive) {
                 val readResult = audioRecord?.read(buffer, bufferSize) ?: -1
 
                 if (readResult > 0) {

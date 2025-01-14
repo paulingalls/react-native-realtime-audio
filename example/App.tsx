@@ -23,10 +23,16 @@ export default function App() {
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
   const recorderViewRef = useRef<RealtimeAudioRecorderViewRef>(null);
   const recorderRef = useRef<RealtimeAudioRecorder>(null);
-  const playerRef = useRef<RealtimeAudioPlayer>(null)
+  const playerRef = useRef<RealtimeAudioPlayer>(null);
   const [transcript, setTranscript] = useState<string>("");
   const [recordedBuffers, setRecordedBuffers] = useState<string[]>([]);
   const audioPayload = useEvent(RealtimeAudioRecorderModule, "onAudioCaptured");
+  useEventListener(RealtimeAudioRecorderModule, "onCaptureComplete", () => {
+    for (const buffer of recordedBuffers) {
+      audioViewRef.current?.addBuffer(buffer);
+    }
+    setRecordedBuffers([]);
+  });
   useEventListener(RealtimeAudioModule, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
   });
@@ -43,7 +49,7 @@ export default function App() {
         encoding: AudioEncoding.pcm16bitInteger,
         channelCount: 1,
         interleaved: true
-      })
+      });
     }
     await recorderRef.current?.startRecording();
   };
@@ -51,10 +57,6 @@ export default function App() {
   const stopRecordingAudio = async () => {
     console.log("Stopping recording audio...");
     await recorderRef.current?.stopRecording();
-    for (const buffer of recordedBuffers) {
-      audioViewRef.current?.addBuffer(buffer);
-    }
-    setRecordedBuffers([])
   };
 
   const playAudio = async () => {
@@ -63,11 +65,11 @@ export default function App() {
     if (playerRef.current === null) {
       // @ts-ignore
       playerRef.current = new RealtimeAudioModule.RealtimeAudioPlayer({
-          sampleRate: 24000,
-          encoding: AudioEncoding.pcm16bitInteger,
-          channelCount: 1,
-          interleaved: true
-        });
+        sampleRate: 24000,
+        encoding: AudioEncoding.pcm16bitInteger,
+        channelCount: 1,
+        interleaved: true
+      });
     }
     client.chat.completions.stream(
       {
@@ -152,6 +154,7 @@ export default function App() {
 
   useEffect(() => {
     if (audioPayload) {
+      console.log("Audio payload received");
       setRecordedBuffers((prev) => [...prev, audioPayload.audioBuffer]);
     }
   }, [audioPayload]);
@@ -199,10 +202,6 @@ export default function App() {
               onPress={() => {
                 console.log("Stopping recording in view...");
                 recorderViewRef.current?.stopRecording();
-                for (const buffer of recordedBuffers) {
-                  audioViewRef.current?.addBuffer(buffer);
-                }
-                setRecordedBuffers([])
               }}
             />
           </View>
@@ -218,10 +217,17 @@ export default function App() {
             onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => {
               if (event && event.nativeEvent !== null && event.nativeEvent.audioBuffer) {
                 const buffer = event.nativeEvent.audioBuffer;
+                console.log("Audio captured in view");
                 setRecordedBuffers((prev) => {
-                  return [...prev, buffer]
+                  return [...prev, buffer];
                 });
               }
+            }}
+            onCaptureComplete={() => {
+              for (const buffer of recordedBuffers) {
+                audioViewRef.current?.addBuffer(buffer);
+              }
+              setRecordedBuffers([]);
             }}
             style={styles.view}
           />

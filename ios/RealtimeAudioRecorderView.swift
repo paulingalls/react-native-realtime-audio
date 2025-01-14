@@ -20,7 +20,7 @@ public class RealtimeAudioRecorderView: ExpoView {
     private var channels: UInt32 = 1
     
     let onAudioCaptured = EventDispatcher()
-
+    let onCaptureComplete = EventDispatcher()
     
     public required init(appContext: AppContext? = nil) {
         self.visualization = WaveformVisualization(sampleCount: sampleCount)
@@ -84,12 +84,16 @@ public class RealtimeAudioRecorderView: ExpoView {
 }
 
 extension RealtimeAudioRecorderView: RealtimeAudioRecorderDelegate {
-    func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String) {
-        let event = ["audioBuffer": didCaptureAudioData]
+    func base64BufferReady(_ base64Audio: String) {
+        let event = ["audioBuffer": base64Audio]
         onAudioCaptured(event)
     }
     
     func bufferCaptured(_ buffer: AVAudioPCMBuffer) {
         updateVisualizationSamples(from: buffer)
+    }
+    
+    func audioRecorderDidFinishRecording() {
+        onCaptureComplete()
     }
 }

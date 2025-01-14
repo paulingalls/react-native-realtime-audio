@@ -6,14 +6,13 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import getAndroidColor
 import mapAudioEncodingToFormat
 import mapChannelCountToInputFormat
-import mapChannelCountToOutputFormat
 
 class RealtimeAudioRecorderModule : Module() {
     var hasListeners = false
 
     override fun definition() = ModuleDefinition {
         Name("RealtimeAudioRecorder")
-        Events("onAudioCaptured")
+        Events("onAudioCaptured", "onCaptureComplete")
 
         OnStartObserving {
             hasListeners = true
@@ -43,7 +42,7 @@ class RealtimeAudioRecorderModule : Module() {
         }
 
         View(RealtimeAudioRecorderView::class) {
-            Events("onAudioCaptured")
+            Events("onAudioCaptured", "onCaptureComplete")
 
             Prop("waveformColor") { view: RealtimeAudioRecorderView, hexColor: String ->
                 view.setVisualizationColor(getAndroidColor(hexColor))
@@ -82,6 +81,12 @@ class RealtimeAudioRecorderModule : Module() {
         }
 
         override fun bufferReady(buffer: ByteArray) {
+        }
+
+        override fun captureComplete() {
+            if (module.hasListeners) {
+                module.sendEvent("onCaptureComplete", mapOf())
+            }
         }
     }
 }

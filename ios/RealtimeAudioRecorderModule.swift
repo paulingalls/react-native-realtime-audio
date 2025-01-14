@@ -7,7 +7,7 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
     public func definition() -> ModuleDefinition {
         Name("RealtimeAudioRecorder")
         
-        Events("onAudioCaptured")
+        Events("onAudioCaptured", "onCaptureComplete")
         
         OnStartObserving {
             hasListeners = true
@@ -40,7 +40,7 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         }
         
         View(RealtimeAudioRecorderView.self) {
-            Events("onAudioCaptured")
+            Events("onAudioCaptured", "onCaptureComplete")
             
             Prop("waveformColor") { (
                 view: RealtimeAudioRecorderView,
@@ -70,14 +70,20 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         }
     }
 
-    func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String) {
+    func base64BufferReady(_ base64Audio: String) {
         if (hasListeners) {
-            let event = ["audioBuffer": didCaptureAudioData]
+            let event = ["audioBuffer": base64Audio]
             sendEvent("onAudioCaptured", event)
         }
     }
 
     func bufferCaptured(_ buffer: AVAudioPCMBuffer) {
+    }
+    
+    func audioRecorderDidFinishRecording() {
+        if (hasListeners) {
+            sendEvent("onCaptureComplete")
+        }
     }
     
     private func getCommonFormat(_ encoding: AudioEncoding) -> AVAudioCommonFormat {

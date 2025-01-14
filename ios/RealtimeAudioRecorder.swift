@@ -2,8 +2,9 @@ import AVFoundation
 import ExpoModulesCore
 
 protocol RealtimeAudioRecorderDelegate: AnyObject {
-    func audioRecorder(_ recorder: RealtimeAudioRecorder, didCaptureAudioData: String)
+    func base64BufferReady(_ base64Audio: String)
     func bufferCaptured(_ buffer: AVAudioPCMBuffer)
+    func audioRecorderDidFinishRecording()
 }
 
 class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
@@ -44,10 +45,16 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
         }
         
         DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
-            while self.isRecording {
-                semaphore.wait()
+            while true {
+                let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(5))
                 let outputBuffer = audioConvertor.getNextBuffer()
                 if outputBuffer == nil {
+                    if (result == .timedOut && !self.isRecording) {
+                        DispatchQueue.main.async {
+                            self.delegate?.audioRecorderDidFinishRecording()
+                        }
+                        break
+                    }
                     continue
                 }
                 let frameLength = Int(outputBuffer!.frameLength)
@@ -89,7 +96,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
                 
                 // Provide data to delegate on main thread
                 DispatchQueue.main.async {
-                    self.delegate?.audioRecorder(self, didCaptureAudioData: base64String)
+                    self.delegate?.base64BufferReady(base64String)
                 }
             }
         }

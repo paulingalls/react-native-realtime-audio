@@ -42,7 +42,17 @@ class RealtimeAudioConverter: @unchecked Sendable {
         let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: frameSize)!
         var error: NSError?
         audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
-            let numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
+            if (self.currentInputBuffer == nil) {
+                inputStatus.pointee = .endOfStream
+                return nil
+            }
+            var numSamplesAvailable: UInt32 = 0
+            if (self.currentInputBuffer!.frameLength > self.currentInputBufferSampleOffset) {
+                numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
+            } else {
+                numSamplesAvailable = self.currentInputBuffer!.frameLength
+                self.currentInputBufferSampleOffset = 0
+            }
             let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
             
             let tempBuffer = AVAudioPCMBuffer(pcmFormat: self.currentInputBuffer!.format,

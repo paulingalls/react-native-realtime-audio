@@ -13,6 +13,7 @@ class RealtimeAudioRecorderView(
 ) : ExpoView(context, appContext),
     RealtimeAudioBufferDelegate {
     private val onAudioCaptured by EventDispatcher<Map<String, String>>()
+    private val onCaptureComplete by EventDispatcher()
     private var audioRecorder: RealtimeAudioRecorder? = null
     private var visualization: AudioVisualization = WaveformVisualization()
     private var isRecording = false
@@ -53,6 +54,10 @@ class RealtimeAudioRecorderView(
         val floatArray = convertByteArrayToFloatArray(buffer)
         visualization.updateData(floatArray)
         postInvalidate()
+    }
+
+    override fun captureComplete() {
+        onCaptureComplete(mapOf())
     }
 
     override fun onDraw(canvas: Canvas) {
