@@ -43,7 +43,7 @@ class RealtimeAudioPlayer: SharedObject {
                                          interleaved: mixerOutputFormat.isInterleaved)!
         self.inputFormat = inputFormat
         self.outputFormat = outputFormat
-        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 4096)!
+        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 1024)!
         super.init()
         setupAudioEngine()
     }
@@ -100,7 +100,7 @@ class RealtimeAudioPlayer: SharedObject {
     private func startPlayingNextBuffer() {
         let outputBuffer = converter.getNextBuffer()
         if outputBuffer == nil {
-            isPlaying = false
+            stop()
             return
         }
         
@@ -116,9 +116,11 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     func stop() {
-        playerNode.stop()
-        converter.clear()
-        isPlaying = false
+        DispatchQueue.main.async {
+            self.playerNode.stop()
+            self.converter.clear()
+            self.isPlaying = false
+        }
     }
     
     func pause() {

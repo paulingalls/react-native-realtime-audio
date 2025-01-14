@@ -9,21 +9,12 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         
         Events("onAudioCaptured")
         
-        OnCreate {
-//            configureAudioSession()
-        }
-        
         OnStartObserving {
             hasListeners = true
         }
         
         OnStopObserving {
             hasListeners = false
-        }
-        
-        AsyncFunction("checkAndRequestAudioPermissions") {
-            let hasPermissions = await checkAndRequestAudioPermissions()
-            return hasPermissions
         }
         
         Class(RealtimeAudioRecorder.self) {
@@ -102,28 +93,4 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         }
     }
     
-    private func checkAndRequestAudioPermissions() async -> Bool  {
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized:
-            return true
-        case .notDetermined:
-            let granted = await AVCaptureDevice.requestAccess(for: .audio)
-            guard granted else {
-                print("Permission denied")
-                return false
-            }
-            return true
-        default:
-            print("Permission denied")
-        }
-        return false
-    }
-    
-    private func configureAudioSession() {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, options: [.mixWithOthers, .defaultToSpeaker])
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch { }
-    }
-
 }

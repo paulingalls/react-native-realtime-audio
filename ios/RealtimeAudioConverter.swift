@@ -27,6 +27,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
     
     func clear() {
         bufferQueue.removeAll()
+        audioConverter.reset()
     }
     
     func getNextBuffer() -> AVAudioPCMBuffer? {

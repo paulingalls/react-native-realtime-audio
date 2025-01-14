@@ -22,19 +22,10 @@ const client = new OpenAI({
 export default function App() {
   const audioViewRef = useRef<RealtimeAudioViewRef>(null);
   const recorderViewRef = useRef<RealtimeAudioRecorderViewRef>(null);
-  const recorderRef = useRef<RealtimeAudioRecorder>(new RealtimeAudioRecorderModule.RealtimeAudioRecorder({
-    sampleRate: 24000,
-    encoding: AudioEncoding.pcm16bitInteger,
-    channelCount: 1,
-    interleaved: false
-  }));
-  const playerRef = useRef<RealtimeAudioPlayer>(new RealtimeAudioModule.RealtimeAudioPlayer({
-    sampleRate: 24000,
-    encoding: AudioEncoding.pcm16bitInteger,
-    channelCount: 1,
-    interleaved: false
-  }));
+  const recorderRef = useRef<RealtimeAudioRecorder>(null);
+  const playerRef = useRef<RealtimeAudioPlayer>(null)
   const [transcript, setTranscript] = useState<string>("");
+  const [recordedBuffers, setRecordedBuffers] = useState<string[]>([]);
   const audioPayload = useEvent(RealtimeAudioRecorderModule, "onAudioCaptured");
   useEventListener(RealtimeAudioModule, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
@@ -45,17 +36,39 @@ export default function App() {
 
   const recordAudio = async () => {
     console.log("Recording audio...");
-    await recorderRef.current.startRecording();
+    if (recorderRef.current === null) {
+      // @ts-ignore
+      recorderRef.current = new RealtimeAudioRecorderModule.RealtimeAudioRecorder({
+        sampleRate: 24000,
+        encoding: AudioEncoding.pcm16bitInteger,
+        channelCount: 1,
+        interleaved: true
+      })
+    }
+    await recorderRef.current?.startRecording();
   };
 
   const stopRecordingAudio = async () => {
     console.log("Stopping recording audio...");
-    await recorderRef.current.stopRecording();
+    await recorderRef.current?.stopRecording();
+    for (const buffer of recordedBuffers) {
+      audioViewRef.current?.addBuffer(buffer);
+    }
+    setRecordedBuffers([])
   };
 
   const playAudio = async () => {
     console.log("Playing audio...");
     setTranscript("");
+    if (playerRef.current === null) {
+      // @ts-ignore
+      playerRef.current = new RealtimeAudioModule.RealtimeAudioPlayer({
+          sampleRate: 24000,
+          encoding: AudioEncoding.pcm16bitInteger,
+          channelCount: 1,
+          interleaved: true
+        });
+    }
     client.chat.completions.stream(
       {
         model: "gpt-4o-audio-preview",
@@ -138,7 +151,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log("new audio payload", audioPayload);
+    if (audioPayload) {
+      setRecordedBuffers((prev) => [...prev, audioPayload.audioBuffer]);
+    }
   }, [audioPayload]);
 
   useEffect(() => {
@@ -174,7 +189,7 @@ export default function App() {
             <Button
               title="Record Audio"
               onPress={() => {
-                console.log("Starting recording in view...", recorderViewRef.current);
+                console.log("Starting recording in view...");
                 recorderViewRef.current?.startRecording();
                 console.log("Recording started in view.");
               }}
@@ -184,6 +199,10 @@ export default function App() {
               onPress={() => {
                 console.log("Stopping recording in view...");
                 recorderViewRef.current?.stopRecording();
+                for (const buffer of recordedBuffers) {
+                  audioViewRef.current?.addBuffer(buffer);
+                }
+                setRecordedBuffers([])
               }}
             />
           </View>
@@ -194,10 +213,16 @@ export default function App() {
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
               channelCount: 1,
-              interleaved: false
+              interleaved: true
             }}
-            onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) =>
-              console.log("RealtimeAudioRecorderView audio captured callback", event.nativeEvent.audioBuffer)}
+            onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => {
+              if (event && event.nativeEvent !== null && event.nativeEvent.audioBuffer) {
+                const buffer = event.nativeEvent.audioBuffer;
+                setRecordedBuffers((prev) => {
+                  return [...prev, buffer]
+                });
+              }
+            }}
             style={styles.view}
           />
         </Group>
@@ -269,7 +294,7 @@ export default function App() {
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
               channelCount: 1,
-              interleaved: false
+              interleaved: true
             }}
             onPlaybackStarted={() => console.log("RealtimeAudioView playback started callback")}
             onPlaybackStopped={() => console.log("RealtimeAudioView playback stopped callback")}
