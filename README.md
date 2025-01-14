@@ -38,6 +38,47 @@ Other Props:
 
 #### Example Usage
 
+### RealtimeAudioModule
+You need to make sure that the app has permissions to use the microphone.  
+You can do this by adding the following to your app.json file, or use the plugin
+from the plugins folder.
+
+```json
+{
+  "expo": {
+    "android": {
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "ios": {
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app uses the microphone to record audio."
+      }
+    }
+  }
+}
+```
+Here is the call to check the permissions.
+
+```javascript
+import { useEvent, useEventListener } from "expo";
+import {
+  RealtimeAudioModule,
+} from 'react-native-realtime-audio';
+
+useEffect(() => {
+  const checkPermissions = async () => {
+    const result = await RealtimeAudioModule.checkAndRequestAudioPermissions();
+    console.log("Permissions result", result);
+  };
+  checkPermissions().then(() => console.log("Permissions checked."));
+}, []);
+
+```
+
+### RealtimeAudioPlayerView
+
 ```javascript
 import {
   RealtimeAudioPlayerView,
@@ -51,7 +92,7 @@ function AudioVisualizer() {
   audioViewRef.current?.addBuffer(audio?.data);
 
   return (
-    <RealtimeAudioView
+    <RealtimeAudioPlayerView
       ref={audioViewRef}
       waveformColor={"#F00"}
       audioFormat={{

@@ -262,7 +262,7 @@ export default function App() {
             />
           </View>
         </Group>
-        <Group name="RealtimeAudioView">
+        <Group name="RealtimeAudioPlayerView">
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Button
               title="Play"
