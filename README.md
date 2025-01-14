@@ -39,7 +39,10 @@ Other Props:
 #### Example Usage
 
 ```javascript
-import { RealtimeAudioView } from 'realtime-audio';
+import {
+  RealtimeAudioPlayerView,
+  RealtimeAudioPlayerViewRef
+} from 'react-native-realtime-audio';
 
 function AudioVisualizer() {
   const audioViewRef = useRef < RealtimeAudioPlayerViewRef > (null);
@@ -74,49 +77,138 @@ A class that handles real-time audio playback from base64-encoded buffers.
 - `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
 - `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
 - `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
-- `interleaved` (boolean): For multichannel, whether the audio data is interleaved (default: true)
 
 #### Example Usage
 
 ```javascript
-import RealtimeAudio from 'react-native-realtime-audio';
+import {
+  RealtimeAudioPlayer,
+  RealtimeAudioPlayerModule 
+} from 'react-native-realtime-audio';
+import { useEventListener } from "expo";
 
-const player = new RealtimeAudio.RealtimeAudioPlayer({
+const player: RealtimeAudioPlayer = new RealtimeAudioPlayerModule.RealtimeAudioPlayer({
   sampleRate: 24000,
   encoding: AudioEncoding.pcm16bitInteger,
-  channelCount: 1,
-  interleaved: false
+  channelCount: 1
+});
+
+useEventListener(RealtimeAudioPlayerModule, "onPlaybackStarted", () => {
+  console.log("RealtimeAudio playback started event");
+});
+useEventListener(RealtimeAudioPlayerModule, "onPlaybackStopped", () => {
+  console.log("RealtimeAudio playback stopped event");
 });
 
 player.addBuffer(audio?.data);
 
+player.pause()
+player.resume()
+player.stop()
+
 ```
 
+### RealtimeAudiorecorderView
 
-## API Reference
+Extends the functionality of RealtimeAudioRecorder by adding a visual waveform representation of the audio being recorded.
 
-### Playing Audio Buffers
+#### Props
 
-Both components accept base64-encoded audio buffers through their `playBuffer` method:
+AudioFormat:
+- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
+- `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
+- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
+
+Other Props:
+- `waveformColor` (string): Color of the waveform (default: '#00F')
+- `onAudioCaptured` (function): Called frequently with a base64 encoded audio buffer
+- `onCaptureComplete` (function): Called when recording is complete and all buffers sent
+
+#### Example Usage
 
 ```javascript
-// Example of playing a buffer
-const audioComponent = useRef(null);
+import {
+  RealtimeAudioRecorderView,
+  RealtimeAudioRecorderViewRef
+} from 'react-native-realtime-audio';
 
-// Play a base64-encoded audio buffer
-audioComponent.current.playBuffer(base64EncodedAudioData);
+function AudioVisualizer() {
+  const recorderViewRef = useRef < RealtimeAudioRecorderViewRef > (null);
+
+  // in a callback somewhere
+  recorderViewRef.current?.startRecording();
+
+  return (
+    <RealtimeAudioRecorderView
+      ref={recorderViewRef}
+      waveformColor={"#0F0"}
+      audioFormat={{
+        sampleRate: 24000,
+        encoding: AudioEncoding.pcm16bitInteger,
+        channelCount: 1
+      }}
+      onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => {
+        if (event && event.nativeEvent !== null && event.nativeEvent.audioBuffer) {
+          const buffer = event.nativeEvent.audioBuffer;
+          console.log("Audio captured in view, do something");
+        }
+      }}
+      onCaptureComplete={() => {
+        console.log("Recording complete, all buffers delivered");
+      }}
+      style={styles.view}
+    />
+  );
+}
 ```
 
-### Event Handlers
+### RealtimeAudioRecorder
 
-- `onPlaybackStarted`: Called when buffers are available for playback
-- `onPlaybackStopped`: Called when buffers are no longer available for playback
+A class that handles real-time audio recording to base64-encoded buffers.
 
-## Supported Formats
+#### Constructor Parameters
 
-- Sample Rates: 8000Hz - 48000Hz (current tested with 24000Hz)
-- Encodings: pcm16, float32 (currently tested with pcm16)
-- Channel Counts: 1 (mono), 2 (stereo) (currently tested with mono)
+- `sampleRate` (number): The sample rate of the audio in Hz (e.g., 44100, 48000)
+- `encoding` (AudioEncoding): The audio encoding format (e.g., 'pcm16', 'float32')
+- `channelCount` (number): Number of audio channels (1 for mono, 2 for stereo)
+
+#### Example Usage
+
+```javascript
+import {
+  RealtimeAudioRecorder,
+  RealtimeAudioRecorderModule 
+} from 'react-native-realtime-audio';
+import { useEvent, useEventListener } from "expo";
+
+const recorder: RealtimeAudioRecorder = new RealtimeAudioRecorderModule.RealtimeAudioRecorder({
+  sampleRate: 24000,
+  encoding: AudioEncoding.pcm16bitInteger,
+  channelCount: 1
+});
+
+const audioPayload = useEvent(RealtimeAudioRecorderModule, "onAudioCaptured");
+audioPayload && console.log("Audio captured in recorder, do something");
+useEventListener(RealtimeAudioRecorderModule, "onCaptureComplete", () => {
+    console.log("Recording complete, all buffers delivered");
+});
+
+recorder.startRecording();
+recorder.stopRecording();
+```
+
+## Example App
+
+The example app demonstrates how to use the RealtimeAudioPlayerView and RealtimeAudioRecorderView components to play and record audio in real-time, with waveform visualization.
+It also demonstrates how to use the RealtimeAudioPlayer and RealtimeAudioRecorder classes directly.
+Read the code in App.tsx to see how to use the components.
+Just CD to the example directory and run the following commands:
+
+```bash
+bun install
+bun run android
+bun run ios
+```
 
 ## Requirements
 

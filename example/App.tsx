@@ -49,8 +49,7 @@ export default function App() {
       recorderRef.current = new RealtimeAudioRecorderModule.RealtimeAudioRecorder({
         sampleRate: 24000,
         encoding: AudioEncoding.pcm16bitInteger,
-        channelCount: 1,
-        interleaved: true
+        channelCount: 1
       });
     }
     await recorderRef.current?.startRecording();
@@ -69,8 +68,7 @@ export default function App() {
       playerRef.current = new RealtimeAudioPlayerModule.RealtimeAudioPlayer({
         sampleRate: 24000,
         encoding: AudioEncoding.pcm16bitInteger,
-        channelCount: 1,
-        interleaved: true
+        channelCount: 1
       });
     }
     client.chat.completions.stream(
@@ -213,8 +211,7 @@ export default function App() {
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
-              channelCount: 1,
-              interleaved: true
+              channelCount: 1
             }}
             onAudioCaptured={(event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => {
               if (event && event.nativeEvent !== null && event.nativeEvent.audioBuffer) {
@@ -301,8 +298,7 @@ export default function App() {
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
-              channelCount: 1,
-              interleaved: true
+              channelCount: 1
             }}
             onPlaybackStarted={() => console.log("RealtimeAudioView playback started callback")}
             onPlaybackStopped={() => console.log("RealtimeAudioView playback stopped callback")}
