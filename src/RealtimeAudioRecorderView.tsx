@@ -2,8 +2,8 @@ import { requireNativeView } from 'expo';
 import {
   RealtimeAudioRecorderViewProps,
   RealtimeAudioRecorderViewRef,
-  RealtimeAudioViewProps,
-  RealtimeAudioViewRef
+  RealtimeAudioPlayerViewProps,
+  RealtimeAudioPlayerViewRef
 } from "./RealtimeAudio.types";
 import { ComponentType, forwardRef, Ref } from "react";
 

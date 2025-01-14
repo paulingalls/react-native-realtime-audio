@@ -1,6 +1,8 @@
 # React Native Realtime Audio
 
-A React Native Expo module for real-time audio playback and visualization. This module provides components for streaming and playing audio buffers in real-time, with optional waveform visualization.
+A React Native Expo module for real-time audio playback and recording, as well as visualization of both.
+This module provides components for streaming and playing audio buffers in real-time, with optional waveform visualization.
+It also includes components for recording audio buffers in real-time, with optional waveform visualization.
 
 ## Installation
 
@@ -11,9 +13,9 @@ npx expo install react-native-realtime-audio
 ## Features
 
 - Real-time audio playback from base64-encoded buffers
+- Real-time audio recording to base64-encoded buffers
 - Configurable sample rate, audio encoding, and channel count
-- Built-in waveform visualization component
-- Low-latency streaming capabilities
+- Built-in waveform visualization component for both playback and recording
 - Simple, easy-to-use API
 
 ## Components
@@ -41,7 +43,7 @@ Other Props:
 import { RealtimeAudioView } from 'realtime-audio';
 
 function AudioVisualizer() {
-  const audioViewRef = useRef<RealtimeAudioViewRef>(null);
+  const audioViewRef = useRef < RealtimeAudioPlayerViewRef > (null);
 
   // in a callback somewhere
   audioViewRef.current?.addBuffer(audio?.data);

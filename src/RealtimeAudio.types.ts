@@ -1,7 +1,7 @@
 import { ViewProps } from "react-native";
 import { Ref } from "react";
 
-export type RealtimeAudioModuleEvents = {
+export type RealtimeAudioPlayerModuleEvents = {
   onPlaybackStarted: () => void;
   onPlaybackStopped: () => void;
 };
@@ -15,7 +15,7 @@ export type RealtimeAudioCapturedEventPayload = {
   audioBuffer: string;
 };
 
-export type RealtimeAudioViewRef = {
+export type RealtimeAudioPlayerViewRef = {
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -37,12 +37,11 @@ export type AudioFormat = {
   sampleRate: number;
   encoding: AudioEncoding;
   channelCount: number;
-  interleaved: boolean;
 }
 
-export type RealtimeAudioViewProps = {
+export type RealtimeAudioPlayerViewProps = {
   audioFormat: AudioFormat;
-  ref?: Ref<RealtimeAudioViewRef>;
+  ref?: Ref<RealtimeAudioPlayerViewRef>;
   waveformColor?: string;
   onPlaybackStarted?: () => void;
   onPlaybackStopped?: () => void;

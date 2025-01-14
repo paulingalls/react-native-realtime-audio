@@ -1,8 +1,8 @@
 import { registerWebModule, NativeModule } from 'expo';
 
-import { RealtimeAudioModuleEvents } from './RealtimeAudio.types';
+import { RealtimeAudioPlayerModuleEvents } from './RealtimeAudio.types';
 
-class RealtimeAudioModule extends NativeModule<RealtimeAudioModuleEvents> {
+class RealtimeAudioModule extends NativeModule<RealtimeAudioPlayerModuleEvents> {
 }
 
 export default registerWebModule(RealtimeAudioModule);

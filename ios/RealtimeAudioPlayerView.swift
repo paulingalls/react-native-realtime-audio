@@ -2,7 +2,7 @@ import ExpoModulesCore
 import SwiftUI
 import AVFoundation
 
-public class RealtimeAudioView: ExpoView {
+public class RealtimeAudioPlayerView: ExpoView {
     private var audioPlayer: RealtimeAudioPlayer?
     private var visualization: AudioVisualization
     private var sampleCount = 200
@@ -94,7 +94,7 @@ public class RealtimeAudioView: ExpoView {
     }
 }
 
-extension RealtimeAudioView: RealtimeAudioPlayerDelegate {
+extension RealtimeAudioPlayerView: RealtimeAudioPlayerDelegate {
     func audioPlayerDidStartPlaying() {
         onPlaybackStarted()
     }

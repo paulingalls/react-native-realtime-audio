@@ -9,7 +9,7 @@ import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 
-class RealtimeAudioView(
+class RealtimeAudioPlayerView(
     context: Context, appContext: AppContext
 ) : ExpoView(context, appContext),
     RealtimeAudioPlayerDelegate {
@@ -26,7 +26,7 @@ class RealtimeAudioView(
     fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
         audioPlayer?.release()
         audioPlayer = RealtimeAudioPlayer(sampleRate, channelConfig, audioFormat).apply {
-            delegate = this@RealtimeAudioView
+            delegate = this@RealtimeAudioPlayerView
         }
     }
 

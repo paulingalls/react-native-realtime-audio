@@ -7,12 +7,14 @@
   "apple": {
     "modules": [
       "RealtimeAudioModule",
+      "RealtimeAudioPlayerModule",
       "RealtimeAudioRecorderModule"
     ]
   },
   "android": {
     "modules": [
       "com.paulingalls.realtimeaudio.RealtimeAudioModule",
+      "com.paulingalls.realtimeaudio.RealtimeAudioPlayerModule",
       "com.paulingalls.realtimeaudio.RealtimeAudioRecorderModule"
     ]
   }

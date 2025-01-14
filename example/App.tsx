@@ -1,14 +1,16 @@
 import { useEvent, useEventListener } from "expo";
 import {
   RealtimeAudioModule,
+  RealtimeAudioPlayerModule,
   RealtimeAudioRecorderModule,
   AudioEncoding,
-  RealtimeAudioView,
+  RealtimeAudioPlayerView,
   RealtimeAudioRecorderView,
-  RealtimeAudioViewRef,
+  RealtimeAudioPlayerViewRef,
   RealtimeAudioPlayer,
   RealtimeAudioRecorder,
-  RealtimeAudioRecorderViewRef, RealtimeAudioCapturedEventPayload
+  RealtimeAudioRecorderViewRef,
+  RealtimeAudioCapturedEventPayload
 } from "react-native-realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +22,7 @@ const client = new OpenAI({
 });
 
 export default function App() {
-  const audioViewRef = useRef<RealtimeAudioViewRef>(null);
+  const audioViewRef = useRef<RealtimeAudioPlayerViewRef>(null);
   const recorderViewRef = useRef<RealtimeAudioRecorderViewRef>(null);
   const recorderRef = useRef<RealtimeAudioRecorder>(null);
   const playerRef = useRef<RealtimeAudioPlayer>(null);
@@ -33,10 +35,10 @@ export default function App() {
     }
     setRecordedBuffers([]);
   });
-  useEventListener(RealtimeAudioModule, "onPlaybackStarted", () => {
+  useEventListener(RealtimeAudioPlayerModule, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
   });
-  useEventListener(RealtimeAudioModule, "onPlaybackStopped", () => {
+  useEventListener(RealtimeAudioPlayerModule, "onPlaybackStopped", () => {
     console.log("RealtimeAudio playback stopped event");
   });
 
@@ -64,7 +66,7 @@ export default function App() {
     setTranscript("");
     if (playerRef.current === null) {
       // @ts-ignore
-      playerRef.current = new RealtimeAudioModule.RealtimeAudioPlayer({
+      playerRef.current = new RealtimeAudioPlayerModule.RealtimeAudioPlayer({
         sampleRate: 24000,
         encoding: AudioEncoding.pcm16bitInteger,
         channelCount: 1,
@@ -293,7 +295,7 @@ export default function App() {
               }}
             />
           </View>
-          <RealtimeAudioView
+          <RealtimeAudioPlayerView
             ref={audioViewRef}
             waveformColor={"#F00"}
             audioFormat={{

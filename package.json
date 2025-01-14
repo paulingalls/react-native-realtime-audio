@@ -1,6 +1,6 @@
 {
   "name": "react-native-realtime-audio",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "author": "paulingalls <paulingalls@gmail.com> (https://github.com/paulingalls)",
   "repository": {
     "type": "git",
@@ -31,7 +31,9 @@
     "expo",
     "react-native-realtime-audio",
     "realtime-audio",
-    "RealtimeAudio"
+    "RealtimeAudio",
+    "OpenAI",
+    "Realtime"
   ],
   "license": "MIT",
   "scripts": {
