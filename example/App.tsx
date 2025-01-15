@@ -207,7 +207,7 @@ export default function App() {
           </View>
           <RealtimeAudioRecorderView
             ref={recorderViewRef}
-            waveformColor={"#0F0"}
+            waveformColor={"#0e2655"}
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
@@ -294,7 +294,7 @@ export default function App() {
           </View>
           <RealtimeAudioPlayerView
             ref={audioViewRef}
-            waveformColor={"#F00"}
+            waveformColor={"#2f93ff"}
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
@@ -343,6 +343,11 @@ const styles = {
   },
   view: {
     flex: 1,
-    height: 100
+    height: 100,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 5,
+    borderStyle: "solid",
+    backgroundColor: "#eee"
   }
 };

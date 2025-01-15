@@ -5,13 +5,12 @@ import AVFoundation
 public class RealtimeAudioPlayerView: ExpoView {
     private var audioPlayer: RealtimeAudioPlayer?
     private var visualization: AudioVisualization
-    private var sampleCount = 200
     
     let onPlaybackStarted = EventDispatcher()
     let onPlaybackStopped = EventDispatcher()
 
     public required init(appContext: AppContext? = nil) {
-        self.visualization = WaveformVisualization(sampleCount: sampleCount)
+        self.visualization = WaveformVisualization()
         super.init(appContext: appContext)
 
         layer.addSublayer(visualization.layer)
@@ -69,6 +68,7 @@ extension RealtimeAudioPlayerView: RealtimeAudioPlayerDelegate {
     }
     
     func audioPlayerDidStopPlaying() {
+        visualization.clearVisualization()
         onPlaybackStopped()
     }
     

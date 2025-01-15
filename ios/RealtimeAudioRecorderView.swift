@@ -12,13 +12,12 @@ import AVFoundation
 public class RealtimeAudioRecorderView: ExpoView {
     private var audioRecorder: RealtimeAudioRecorder?
     private var visualization: AudioVisualization
-    private var sampleCount = 200
     
     let onAudioCaptured = EventDispatcher()
     let onCaptureComplete = EventDispatcher()
     
     public required init(appContext: AppContext? = nil) {
-        self.visualization = WaveformVisualization(sampleCount: sampleCount)
+        self.visualization = WaveformVisualization()
         super.init(appContext: appContext)
 
         layer.addSublayer(visualization.layer)
@@ -73,6 +72,7 @@ extension RealtimeAudioRecorderView: RealtimeAudioRecorderDelegate {
     }
     
     func audioRecorderDidFinishRecording() {
+        visualization.clearVisualization()
         onCaptureComplete()
     }
 }

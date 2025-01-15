@@ -2,14 +2,12 @@ import AVFoundation
 
 class WaveformVisualization: AudioVisualization {
     private let waveformLayer = CAShapeLayer()
-    private var sampleCount: Int
-    
+
     var layer: CALayer {
         return waveformLayer
     }
     
-    init(sampleCount: Int = 100) {
-        self.sampleCount = sampleCount
+    init() {
         setupWaveformLayer()
     }
     
@@ -25,6 +23,7 @@ class WaveformVisualization: AudioVisualization {
             return []
         }
         
+        let sampleCount = Int(waveformLayer.bounds.width/waveformLayer.lineWidth)
         let channelCount = Int(buffer.format.channelCount)
         let frameLength = Int(buffer.frameLength)
         let strideLength = max(1, frameLength / sampleCount)
@@ -67,6 +66,10 @@ class WaveformVisualization: AudioVisualization {
             path.addLine(to: CGPoint(x: x, y: midPoint + sampleHeight/2))
         }
         waveformLayer.path = path.cgPath
+    }
+    
+    func clearVisualization() {
+        waveformLayer.path = nil
     }
     
     func setColor(_ color: UIColor) {

@@ -7,5 +7,6 @@ protocol AudioVisualization: AnyObject {
     func updateVisualization(with samples: [Float])
     func setColor(_ color: UIColor)
     func setFrame(_ frame: CGRect)
+    func clearVisualization()
 }
 
