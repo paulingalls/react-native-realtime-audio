@@ -6,11 +6,6 @@ public class RealtimeAudioPlayerView: ExpoView {
     private var audioPlayer: RealtimeAudioPlayer?
     private var visualization: AudioVisualization
     private var sampleCount = 200
-
-    // Audio format properties
-    private var sampleRate: Double = 24000
-    private var commonFormat: AVAudioCommonFormat = .pcmFormatInt16
-    private var channels: UInt32 = 1
     
     let onPlaybackStarted = EventDispatcher()
     let onPlaybackStopped = EventDispatcher()
@@ -18,15 +13,20 @@ public class RealtimeAudioPlayerView: ExpoView {
     public required init(appContext: AppContext? = nil) {
         self.visualization = WaveformVisualization(sampleCount: sampleCount)
         super.init(appContext: appContext)
-        setupVisualization()
+
+        layer.addSublayer(visualization.layer)
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupAudioPlayer() {
-        // Recreate audio player with current format settings
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        visualization.setFrame(bounds)
+    }
+    
+    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
         audioPlayer = RealtimeAudioPlayer(
             sampleRate: sampleRate,
             commonFormat: commonFormat,
@@ -35,50 +35,22 @@ public class RealtimeAudioPlayerView: ExpoView {
         audioPlayer?.delegate = self
     }
 
-    private func setupVisualization() {
-        layer.addSublayer(visualization.layer)
-    }
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        visualization.setFrame(bounds)
-    }
-    
-    // MARK: - Public Methods
-
-    @objc
     func addBuffer(_ base64String: String) {
         audioPlayer?.addBuffer(base64String)
     }
 
-    @objc
     func resume() {
         audioPlayer?.resume()
     }
 
-    @objc
     func pause() {
         audioPlayer?.pause()
     }
 
-    @objc
     func stop() {
         audioPlayer?.stop()
     }
 
-    // MARK: - Configuration Methods
-
-    @objc
-    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
-        self.sampleRate = sampleRate
-        self.commonFormat = commonFormat
-        self.channels = channels
-
-        // Recreate audio player with new settings
-        setupAudioPlayer()
-    }
-
-    @objc
     func setWaveformColor(_ hexColor: UIColor) {
         visualization.setColor(hexColor)
     }

@@ -14,31 +14,18 @@ public class RealtimeAudioRecorderView: ExpoView {
     private var visualization: AudioVisualization
     private var sampleCount = 200
     
-    // Audio format properties
-    private var sampleRate: Double = 24000
-    private var commonFormat: AVAudioCommonFormat = .pcmFormatInt16
-    private var channels: UInt32 = 1
-    
     let onAudioCaptured = EventDispatcher()
     let onCaptureComplete = EventDispatcher()
     
     public required init(appContext: AppContext? = nil) {
         self.visualization = WaveformVisualization(sampleCount: sampleCount)
         super.init(appContext: appContext)
-        setupVisualization()
+
+        layer.addSublayer(visualization.layer)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func setupAudioRecorder() {
-        audioRecorder = RealtimeAudioRecorder(sampleRate: sampleRate, channelCount: channels, audioFormat: commonFormat)
-        audioRecorder?.delegate = self
-    }
-
-    private func setupVisualization() {
-        layer.addSublayer(visualization.layer)
     }
 
     public override func layoutSubviews() {
@@ -46,7 +33,11 @@ public class RealtimeAudioRecorderView: ExpoView {
         visualization.setFrame(bounds)
     }
 
-    @objc
+    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
+        audioRecorder = RealtimeAudioRecorder(sampleRate: sampleRate, channelCount: channels, audioFormat: commonFormat)
+        audioRecorder?.delegate = self
+    }
+
     func startRecording() {
         do {
             try audioRecorder?.startRecording()
@@ -55,22 +46,10 @@ public class RealtimeAudioRecorderView: ExpoView {
         }
     }
 
-    @objc
     func stopRecording() {
         audioRecorder?.stopRecording()
     }
     
-    @objc
-    func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
-        self.sampleRate = sampleRate
-        self.commonFormat = commonFormat
-        self.channels = channels
-
-        // Recreate audio player with new settings
-        setupAudioRecorder()
-    }
-
-    @objc
     func setWaveformColor(_ hexColor: UIColor) {
         visualization.setColor(hexColor)
     }

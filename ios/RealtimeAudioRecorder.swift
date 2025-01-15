@@ -32,24 +32,21 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     
     func startRecording() throws {
         isRecording = true
-        let semaphore = DispatchSemaphore(value: 0)
         let inputFormat = inputNode.outputFormat(forBus: 0)
         let audioConvertor = RealtimeAudioConverter(inputFormat: inputFormat,
                                                     outputFormat: outputFormat,
-                                                    frameSize: 1200)!
+                                                    frameSize: 2048)!
         
         let tapBlock: AVAudioNodeTapBlock = { (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
             audioConvertor.addBuffer(buffer)
             self.delegate?.bufferCaptured(buffer)
-            semaphore.signal()
         }
         
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
             while true {
-                let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(5))
                 let outputBuffer = audioConvertor.getNextBuffer()
                 if outputBuffer == nil {
-                    if (result == .timedOut && !self.isRecording) {
+                    if (!self.isRecording) {
                         DispatchQueue.main.async {
                             self.delegate?.audioRecorderDidFinishRecording()
                         }
@@ -102,7 +99,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
         }
         
         do {
-            inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat, block: tapBlock)
+            inputNode.installTap(onBus: 0, bufferSize: 2048, format: inputFormat, block: tapBlock)
             try audioEngine.start()
         } catch {
             print("Error starting audio engine: \(error.localizedDescription)")
