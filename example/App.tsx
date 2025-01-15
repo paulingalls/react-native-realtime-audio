@@ -343,6 +343,7 @@ const styles = {
   },
   view: {
     flex: 1,
+    marginTop: 10,
     height: 100,
     borderWidth: 1,
     borderColor: "gray",
