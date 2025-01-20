@@ -14,6 +14,12 @@ class RealtimeAudioPlayer: SharedObject {
     private let inputFormat: AVAudioFormat
     private let outputFormat: AVAudioFormat
     private let converter: RealtimeAudioConverter
+    private var bufferQueue: [AVAudioPCMBuffer] = []
+    private let queueReady = DispatchSemaphore(value: 0)
+    private let converterDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.converter-queue")
+    private let playerDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.player-queue")
+    private let playerReady = DispatchSemaphore(value: 0)
+
     private var isPlaying = false {
         didSet {
             if isPlaying != oldValue {
@@ -43,7 +49,7 @@ class RealtimeAudioPlayer: SharedObject {
                                          interleaved: mixerOutputFormat.isInterleaved)!
         self.inputFormat = inputFormat
         self.outputFormat = outputFormat
-        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 2048)!
+        self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 48000)!
         super.init()
         setupAudioEngine()
     }
@@ -64,6 +70,7 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     private func setupAudioEngine() {
+        playerNode.volume = 1.0
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)
         
@@ -93,48 +100,57 @@ class RealtimeAudioPlayer: SharedObject {
     
     private func checkAndStartPlayback() {
         guard !isPlaying, !converter.isEmpty() else { return }
+        
         isPlaying = true
-        startPlayingNextBuffer()
-    }
-    
-    private func startPlayingNextBuffer() {
-        let outputBuffer = converter.getNextBuffer()
-        if outputBuffer == nil {
-            stop()
-            return
+        converterDispatchQueue.async {
+            while self.isPlaying {
+                self.playerReady.wait()
+                let outputBuffer = self.converter.getNextBuffer()
+                if outputBuffer == nil {
+                    self.stop()
+                    break
+                }
+                self.bufferQueue.append(outputBuffer!)
+                self.queueReady.signal()
+            }
         }
-        
-        playerNode.scheduleBuffer(outputBuffer!, at: nil) { [weak self] in
-            self?.startPlayingNextBuffer()
+        playerDispatchQueue.async {
+            while self.isPlaying {
+                self.queueReady.wait()
+                
+                if self.bufferQueue.isEmpty {
+                    self.playerReady.signal();
+                    continue
+                }
+                let outputBuffer: AVAudioPCMBuffer! = self.bufferQueue.removeFirst()
+                self.playerNode.scheduleBuffer(outputBuffer!, at: nil) { [weak self] in
+                    self?.playerReady.signal()
+                }
+                self.delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer)
+            }
         }
-        
-        delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer!)
-        
         if !playerNode.isPlaying {
             playerNode.play()
+            playerReady.signal()
         }
     }
-    
+        
     func stop() {
         DispatchQueue.main.async {
-            self.playerNode.stop()
-            self.converter.clear()
             self.isPlaying = false
+            self.playerNode.stop()
+            self.playerNode.reset()
+            self.converter.clear()
+            self.bufferQueue.removeAll()
         }
     }
     
     func pause() {
-        playerNode.pause()
-        isPlaying = false
+        playerNode.isPlaying ? playerNode.pause() : ()
     }
     
     func resume() {
-        if !converter.isEmpty() {
-            isPlaying = true
-            if !playerNode.isPlaying {
-                startPlayingNextBuffer()
-            }
-        }
+        playerNode.isPlaying ? () : playerNode.play()
     }
     
     deinit {

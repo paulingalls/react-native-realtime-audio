@@ -55,9 +55,26 @@ public class RealtimeAudioPlayerView: ExpoView {
     }
 
     private func updateVisualizationSamples(from buffer: AVAudioPCMBuffer) {
-        let samples = self.visualization.getSamplesFromAudio(buffer)
-        DispatchQueue.main.async { [weak self] in
-            self?.visualization.updateVisualization(with: samples)
+        let samplePieces = visualization.getSamplesFromAudio(buffer)
+        if samplePieces.isEmpty { return }
+        
+        let sampleRate = Float(buffer.format.sampleRate)
+        let sampleCount = samplePieces[0].count
+        
+        // Calculate the duration of each piece
+        let pieceDuration = Float(sampleCount) / sampleRate
+        
+        // Use DispatchQueue to schedule the updates
+        let queue = DispatchQueue(label: "os.react-native-real-time-audio.player-visualization", qos: .userInteractive)
+        
+        for (index, samples) in samplePieces.enumerated() {
+            let delay = Double(Float(index) * pieceDuration)
+            
+            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                DispatchQueue.main.async {
+                    self?.visualization.updateVisualization(with: samples)
+                }
+            }
         }
     }
 }

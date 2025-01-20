@@ -49,8 +49,18 @@ public class RealtimeAudioModule:
     
     private func configureAudioSession() {
         do {
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, options: [.mixWithOthers, .defaultToSpeaker])
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, mode: .voiceChat)
             try AVAudioSession.sharedInstance().setActive(true)
+            if #available(iOS 18.2, *) {
+                if AVAudioSession.sharedInstance().isEchoCancelledInputAvailable {
+                    try AVAudioSession.sharedInstance().setPrefersEchoCancelledInput(true) // Enable echo cancellation
+                } else {
+                    print("Echo cancellation not supported on this device")
+                }
+            } else {
+                print("Echo cancellation not supported on this operating system")
+            }
+            
         } catch { }
     }
 }
