@@ -19,6 +19,7 @@ class RealtimeAudioPlayer: SharedObject {
     private let converterDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.converter-queue")
     private let playerDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.player-queue")
     private let playerReady = DispatchSemaphore(value: 0)
+    private var isStopping = false
 
     private var isPlaying = false {
         didSet {
@@ -55,6 +56,9 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     public func addBuffer(_ base64EncodedString: String) {
+        guard !isStopping else {
+            return;
+        }
         guard let data = Data(base64Encoded: base64EncodedString) else {
             print("Error: Invalid base64 string")
             return
@@ -73,12 +77,7 @@ class RealtimeAudioPlayer: SharedObject {
         playerNode.volume = 1.0
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)
-        
-        do {
-            try engine.start()
-        } catch {
-            print("Error starting audio engine: \(error.localizedDescription)")
-        }
+        engine.prepare()
     }
     
     private func createBuffer(from data: Data) throws -> AVAudioPCMBuffer {
@@ -99,15 +98,16 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     private func checkAndStartPlayback() {
-        guard !isPlaying, !converter.isEmpty() else { return }
-        
+        guard !isPlaying, converter.isReady() else { return }
+
         isPlaying = true
         converterDispatchQueue.async {
-            while self.isPlaying {
+            while !self.isStopping {
                 self.playerReady.wait()
                 let outputBuffer = self.converter.getNextBuffer()
                 if outputBuffer == nil {
                     self.stop()
+                    self.queueReady.signal();
                     break
                 }
                 self.bufferQueue.append(outputBuffer!)
@@ -115,8 +115,11 @@ class RealtimeAudioPlayer: SharedObject {
             }
         }
         playerDispatchQueue.async {
-            while self.isPlaying {
+            while true {
                 self.queueReady.wait()
+                if self.isStopping {
+                    break
+                }
                 
                 if self.bufferQueue.isEmpty {
                     self.playerReady.signal();
@@ -129,19 +132,26 @@ class RealtimeAudioPlayer: SharedObject {
                 self.delegate?.audioPlayerBufferDidBecomeAvailable(outputBuffer)
             }
         }
-        if !playerNode.isPlaying {
+        
+        do {
+            try engine.start()
             playerNode.play()
             playerReady.signal()
+        } catch {
+            print("Error starting audio engine: \(error.localizedDescription)")
         }
     }
         
     func stop() {
-        DispatchQueue.main.async {
-            self.isPlaying = false
-            self.playerNode.stop()
-            self.playerNode.reset()
+        isStopping = true
+        self.playerNode.stop()
+        DispatchQueue.main.asyncAfter(wallDeadline: DispatchWallTime.now() + DispatchTimeInterval.seconds(1)) {
+            self.isStopping = false
+            self.engine.stop()
+            self.engine.reset()
             self.converter.clear()
             self.bufferQueue.removeAll()
+            self.isPlaying = false
         }
     }
     

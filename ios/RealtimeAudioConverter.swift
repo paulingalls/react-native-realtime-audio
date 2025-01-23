@@ -9,6 +9,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
     private var currentInputBufferSampleOffset: UInt32 = 0
     private var frameSize: UInt32
     private let semaphore = DispatchSemaphore(value: 0)
+    private let inputBufferLock = NSLock()
 
 
     init?(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat, frameSize: UInt32) {
@@ -22,19 +23,33 @@ class RealtimeAudioConverter: @unchecked Sendable {
         semaphore.signal()
     }
     
-    func isEmpty() -> Bool {
-        return bufferQueue.isEmpty
+    func isReady() -> Bool {
+        if bufferQueue.isEmpty {
+            return false
+        }
+        var totalFrames: UInt32 = 0
+        for buffer in bufferQueue {
+            totalFrames += buffer.frameLength
+        }
+        return totalFrames > frameSize
     }
     
     func clear() {
+        inputBufferLock.lock()
         bufferQueue.removeAll()
         audioConverter.reset()
+        currentInputBuffer = nil
+        currentInputBufferSampleOffset = 0
+        inputBufferLock.unlock()
     }
     
     func getNextBuffer() -> AVAudioPCMBuffer? {
+        inputBufferLock.lock()
         if currentInputBuffer == nil {
-            let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(100))
+            let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(200))
             if bufferQueue.isEmpty || result == .timedOut {
+                inputBufferLock.unlock()
+                print("getNextBuffer cleared lock with empty queue")
                 return nil;
             }
             currentInputBuffer = bufferQueue.removeFirst()
@@ -43,7 +58,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
 
         let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: frameSize)!
         var error: NSError?
-        audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
+        let status = audioConverter.convert(to: outputBuffer, error: &error) { numSamplesNeeded, inputStatus in
             if self.currentInputBuffer == nil {
                 inputStatus.pointee = .endOfStream
                 return nil
@@ -52,8 +67,9 @@ class RealtimeAudioConverter: @unchecked Sendable {
             if self.currentInputBuffer!.frameLength > self.currentInputBufferSampleOffset {
                 numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
             } else {
-                numSamplesAvailable = 0
-                self.currentInputBufferSampleOffset = 0
+                print("not enough bits in this buffer")
+                inputStatus.pointee = .endOfStream
+                return nil
             }
             let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
             
@@ -74,7 +90,8 @@ class RealtimeAudioConverter: @unchecked Sendable {
             if samplesToCopy < numSamplesNeeded {
                 self.currentInputBufferSampleOffset = 0
                 let result = self.semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(200))
-                if self.bufferQueue.isEmpty || result == .timedOut {
+                if self.bufferQueue.isEmpty {
+                    print("buffer empty, sending endOfStream, result: \(result)")
                     self.currentInputBuffer = nil
                     inputStatus.pointee = .endOfStream
                     tempBuffer.frameLength = samplesToCopy
@@ -92,6 +109,11 @@ class RealtimeAudioConverter: @unchecked Sendable {
             return tempBuffer
         }
 
+        inputBufferLock.unlock()
+        if status == AVAudioConverterOutputStatus.endOfStream {
+            print("end of stream")
+            return nil
+        }
         return outputBuffer
     }
 }

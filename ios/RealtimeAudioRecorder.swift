@@ -12,6 +12,8 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     private var inputNode: AVAudioInputNode
     private let outputFormat: AVAudioFormat
     private var isRecording: Bool = false
+    private let recorderDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.recorder-queue")
+
      
     init?(sampleRate: Double = 24000,
           channelCount: UInt32 = 1,
@@ -42,7 +44,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
             self.delegate?.bufferCaptured(buffer)
         }
         
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
+        recorderDispatchQueue.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1)) {
             while true {
                 let outputBuffer = audioConvertor.getNextBuffer()
                 if outputBuffer == nil {

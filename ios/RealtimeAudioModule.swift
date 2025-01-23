@@ -49,7 +49,7 @@ public class RealtimeAudioModule:
     
     private func configureAudioSession() {
         do {
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, mode: .voiceChat)
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, mode: .videoChat)
             try AVAudioSession.sharedInstance().setActive(true)
             if #available(iOS 18.2, *) {
                 if AVAudioSession.sharedInstance().isEchoCancelledInputAvailable {
