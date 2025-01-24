@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 
 class RealtimeAudioConverter: @unchecked Sendable {
+    private let inputFormat: AVAudioFormat
     private let outputFormat: AVAudioFormat
     private let audioConverter: AVAudioConverter
     private var bufferQueue: [AVAudioPCMBuffer] = []
@@ -14,8 +15,9 @@ class RealtimeAudioConverter: @unchecked Sendable {
 
     init?(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat, frameSize: UInt32) {
         self.outputFormat = outputFormat
+        self.inputFormat = inputFormat
         self.frameSize = frameSize
-        self.audioConverter = AVAudioConverter(from: inputFormat, to: self.outputFormat)!
+        self.audioConverter = AVAudioConverter(from: inputFormat, to: outputFormat)!
     }
     
     func addBuffer(_ buffer: AVAudioPCMBuffer) {
@@ -27,11 +29,11 @@ class RealtimeAudioConverter: @unchecked Sendable {
         if bufferQueue.isEmpty {
             return false
         }
-        var totalFrames: UInt32 = 0
+        var bufferDuration: Float32 = 0.0
         for buffer in bufferQueue {
-            totalFrames += buffer.frameLength
+            bufferDuration += Float32(buffer.frameLength) / Float32(inputFormat.sampleRate)
         }
-        return totalFrames > frameSize
+        return bufferDuration > 1.0
     }
     
     func clear() {
@@ -68,10 +70,8 @@ class RealtimeAudioConverter: @unchecked Sendable {
                 numSamplesAvailable = self.currentInputBuffer!.frameLength - self.currentInputBufferSampleOffset
             } else {
                 print("not enough bits in this buffer")
-                inputStatus.pointee = .endOfStream
-                return nil
             }
-            let samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
+            var samplesToCopy = min(numSamplesAvailable, numSamplesNeeded)
             
             let tempBuffer = AVAudioPCMBuffer(pcmFormat: self.currentInputBuffer!.format,
                                               frameCapacity: numSamplesNeeded)!
@@ -88,22 +88,28 @@ class RealtimeAudioConverter: @unchecked Sendable {
             self.currentInputBufferSampleOffset += samplesToCopy
             
             if samplesToCopy < numSamplesNeeded {
-                self.currentInputBufferSampleOffset = 0
-                let result = self.semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(200))
-                if self.bufferQueue.isEmpty {
-                    print("buffer empty, sending endOfStream, result: \(result)")
-                    self.currentInputBuffer = nil
-                    inputStatus.pointee = .endOfStream
-                    tempBuffer.frameLength = samplesToCopy
-                    return tempBuffer
-                }
-                self.currentInputBuffer = self.bufferQueue.removeFirst()
-                
-                let samplesRemaining = numSamplesNeeded - samplesToCopy
-                let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
-                destData.mData?.advanced(by: Int(samplesToCopy * bytesPerFrame)).copyMemory(from: sourceData.mData!,
-                                                                                            byteCount: Int(samplesRemaining * bytesPerFrame))
-                self.currentInputBufferSampleOffset += samplesRemaining
+                repeat {
+                    self.currentInputBufferSampleOffset = 0
+                    let result = self.semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(1))
+                    if self.bufferQueue.isEmpty {
+                        print("buffer empty, sending endOfStream, result: \(result)")
+                        self.currentInputBuffer = nil
+                        inputStatus.pointee = .endOfStream
+                        tempBuffer.frameLength = samplesToCopy
+                        return tempBuffer
+                    }
+                    self.currentInputBuffer = self.bufferQueue.removeFirst()
+                    
+                    let samplesDesired = numSamplesNeeded - samplesToCopy
+                    let samplesRemaining = self.currentInputBuffer!.frameLength
+                    let samplesLeftToCopy = min(samplesRemaining, samplesDesired)
+                    
+                    let sourceData = self.currentInputBuffer!.audioBufferList.pointee.mBuffers
+                    destData.mData?.advanced(by: Int(samplesToCopy * bytesPerFrame)).copyMemory(from: sourceData.mData!,
+                                                                                                byteCount: Int(samplesLeftToCopy * bytesPerFrame))
+                    self.currentInputBufferSampleOffset += samplesLeftToCopy
+                    samplesToCopy += samplesLeftToCopy
+                } while samplesToCopy < numSamplesNeeded
             }
             inputStatus.pointee = .haveData
             return tempBuffer

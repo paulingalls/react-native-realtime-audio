@@ -20,6 +20,7 @@ class RealtimeAudioPlayer: SharedObject {
     private let playerDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.player-queue")
     private let playerReady = DispatchSemaphore(value: 0)
     private var isStopping = false
+    private var isEngineSetup = false
 
     private var isPlaying = false {
         didSet {
@@ -46,13 +47,13 @@ class RealtimeAudioPlayer: SharedObject {
         let mixerOutputFormat = engine.mainMixerNode.outputFormat(forBus: 0)
         let outputFormat = AVAudioFormat(commonFormat: mixerOutputFormat.commonFormat,
                                          sampleRate: 48000,
-                                         channels: mixerOutputFormat.channelCount,
-                                         interleaved: mixerOutputFormat.isInterleaved)!
+                                         channels: 1,
+                                         interleaved: true)!
         self.inputFormat = inputFormat
         self.outputFormat = outputFormat
         self.converter = RealtimeAudioConverter(inputFormat: inputFormat, outputFormat: outputFormat, frameSize: 48000)!
         super.init()
-        setupAudioEngine()
+        print("RealtimeAudioPlayer initialized")
     }
     
     public func addBuffer(_ base64EncodedString: String) {
@@ -67,6 +68,7 @@ class RealtimeAudioPlayer: SharedObject {
         do {
             let buffer = try createBuffer(from: data)
             converter.addBuffer(buffer)
+            print("added buffer \(buffer.frameLength)")
             checkAndStartPlayback()
         } catch {
             print("Error creating buffer: \(error.localizedDescription)")
@@ -74,10 +76,23 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     private func setupAudioEngine() {
+        guard !isEngineSetup else {
+          return
+        }
+      
+//        do {
+//          print("initial input format: \(engine.inputNode.outputFormat(forBus: 0))")
+//          try engine.inputNode.setVoiceProcessingEnabled(true)
+//        } catch {
+//          print("Error setting voice processing enabled: \(error.localizedDescription)")
+//        }
+
         playerNode.volume = 1.0
+        print("output format: \(outputFormat.sampleRate) \(outputFormat.channelCount) \(outputFormat.commonFormat)")
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)
         engine.prepare()
+        isEngineSetup = true
     }
     
     private func createBuffer(from data: Data) throws -> AVAudioPCMBuffer {
@@ -99,12 +114,16 @@ class RealtimeAudioPlayer: SharedObject {
     
     private func checkAndStartPlayback() {
         guard !isPlaying, converter.isReady() else { return }
+        setupAudioEngine()
+        
+        print("Starting playback")
 
         isPlaying = true
         converterDispatchQueue.async {
             while !self.isStopping {
                 self.playerReady.wait()
                 let outputBuffer = self.converter.getNextBuffer()
+                print("got next buffer from converter \(outputBuffer?.frameLength ?? 0)")
                 if outputBuffer == nil {
                     self.stop()
                     self.queueReady.signal();
@@ -164,6 +183,9 @@ class RealtimeAudioPlayer: SharedObject {
     }
     
     deinit {
+      print("RealTimeAudioPlayer deinit")
         engine.stop()
+        engine.reset()
+        converter.clear()
     }
 }

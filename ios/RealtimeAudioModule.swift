@@ -48,19 +48,23 @@ public class RealtimeAudioModule:
     }
     
     private func configureAudioSession() {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord, mode: .videoChat)
-            try AVAudioSession.sharedInstance().setActive(true)
-            if #available(iOS 18.2, *) {
-                if AVAudioSession.sharedInstance().isEchoCancelledInputAvailable {
-                    try AVAudioSession.sharedInstance().setPrefersEchoCancelledInput(true) // Enable echo cancellation
+        DispatchQueue.main.async {
+            do {
+                try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .mixWithOthers])
+                try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+                if #available(iOS 18.2, *) {
+                    if AVAudioSession.sharedInstance().isEchoCancelledInputAvailable {
+                        try AVAudioSession.sharedInstance().setPrefersEchoCancelledInput(true) // Enable echo cancellation
+                    } else {
+                        print("Echo cancellation not supported on this device")
+                    }
                 } else {
-                    print("Echo cancellation not supported on this device")
+                    print("Echo cancellation not supported on this operating system")
                 }
-            } else {
-                print("Echo cancellation not supported on this operating system")
+                
+            } catch {
+                print("error setting audio session category: \(error.localizedDescription)")
             }
-            
-        } catch { }
+        }
     }
 }
