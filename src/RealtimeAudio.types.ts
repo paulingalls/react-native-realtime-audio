@@ -51,6 +51,7 @@ export type RealtimeAudioRecorderViewProps = {
   audioFormat: AudioFormat;
   ref?: Ref<RealtimeAudioRecorderViewRef>;
   waveformColor?: string;
+  echoCancellationEnabled?: boolean;
   onAudioCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
   onCaptureComplete?: () => void;
 } & ViewProps;

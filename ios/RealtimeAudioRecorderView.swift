@@ -12,6 +12,7 @@ import AVFoundation
 public class RealtimeAudioRecorderView: ExpoView {
   private var audioRecorder: RealtimeAudioRecorder?
   private var visualization: AudioVisualization
+  private var echoCancellationEnabled: Bool = false
   
   let onAudioCaptured = EventDispatcher()
   let onCaptureComplete = EventDispatcher()
@@ -35,6 +36,7 @@ public class RealtimeAudioRecorderView: ExpoView {
   func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
     audioRecorder = RealtimeAudioRecorder(sampleRate: sampleRate, channelCount: channels, audioFormat: commonFormat)
     audioRecorder?.delegate = self
+    audioRecorder?.echoCancellationEnabled = echoCancellationEnabled
   }
   
   func startRecording() {
@@ -51,6 +53,11 @@ public class RealtimeAudioRecorderView: ExpoView {
   
   func setWaveformColor(_ hexColor: UIColor) {
     visualization.setColor(hexColor)
+  }
+  
+  func setEchoCancellationEnabled(_ enabled: Bool) {
+    echoCancellationEnabled = enabled
+    audioRecorder?.echoCancellationEnabled = enabled
   }
   
   private func updateVisualizationSamples(from buffer: AVAudioPCMBuffer) {

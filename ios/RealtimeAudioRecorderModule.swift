@@ -18,10 +18,11 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
     }
     
     Class(RealtimeAudioRecorder.self) {
-      Constructor { (audioFormat: AudioFormatSettings) -> RealtimeAudioRecorder in
+      Constructor { (audioFormat: AudioFormatSettings, echoCancellationEnabled: Bool) -> RealtimeAudioRecorder in
         let recorder: RealtimeAudioRecorder = RealtimeAudioRecorder(sampleRate: audioFormat.sampleRate,
                                                                     channelCount: audioFormat.channelCount,
                                                                     audioFormat: getCommonFormat(audioFormat.encoding))!
+        recorder.echoCancellationEnabled = echoCancellationEnabled ?? false
         recorder.delegate = self
         return recorder
       }
@@ -58,6 +59,13 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
           commonFormat: self.getCommonFormat(format.encoding),
           channels: format.channelCount
         )
+      }
+      
+      Prop("echoCancellationEnabled") { (
+        view: RealtimeAudioRecorderView,
+        enabled: Bool
+      ) in
+        view.setEchoCancellationEnabled(enabled)
       }
       
       AsyncFunction("startRecording") { (view: RealtimeAudioRecorderView) in

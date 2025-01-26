@@ -208,6 +208,7 @@ export default function App() {
           <RealtimeAudioRecorderView
             ref={recorderViewRef}
             waveformColor={"#0e2655"}
+            echoCancellationEnabled={true}
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,

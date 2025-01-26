@@ -31,20 +31,13 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
   }
   
   weak var delegate: RealtimeAudioRecorderDelegate?
+  public var echoCancellationEnabled: Bool = false
   
   func startRecording() throws {
-    
-    //        do {
-    //            print("initial input format: \(inputNode.outputFormat(forBus: 0))")
-    //            try inputNode.setVoiceProcessingEnabled(true)
-    //            try audioEngine.outputNode.setVoiceProcessingEnabled(true)
-    //            audioEngine.connect(inputNode, to: audioEngine.outputNode, format: nil)
-    //        } catch {
-    //            print("Error setting voice processing enabled: \(error.localizedDescription)")
-    //        }
-    
     let yield = DispatchSemaphore(value: 0)
     isRecording = true
+    
+    
     let inputFormat = inputNode.outputFormat(forBus: 0)
     print("inputFormat: \(inputFormat)")
     let audioConvertor = RealtimeAudioConverter(inputFormat: inputFormat,
@@ -58,9 +51,17 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
       }
     }
     
+    if self.echoCancellationEnabled {
+      do {
+        try inputNode.setVoiceProcessingEnabled(true)
+        try audioEngine.outputNode.setVoiceProcessingEnabled(true)
+      } catch {
+        print("Error setting voice processing enabled: \(error.localizedDescription)")
+      }
+    }
+    
     do {
       inputNode.installTap(onBus: 0, bufferSize: 4800, format: inputFormat, block: tapBlock)
-      //            try inputNode.setVoiceProcessingEnabled(true)
       try audioEngine.start()
     } catch {
       print("Error starting audio engine: \(error.localizedDescription)")
@@ -107,17 +108,14 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
           
         case .pcmFormatFloat64:
           return
-          
         case .otherFormat:
           return
-          
         @unknown default:
           return
         }
         
         let base64String = audioData.base64EncodedString()
         
-        // Provide data to delegate on main thread
         DispatchQueue.main.async {
           self.delegate?.base64BufferReady(base64String)
         }
@@ -129,6 +127,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     isRecording = false
     audioEngine.stop()
     inputNode.removeTap(onBus: 0)
+    audioEngine.reset()
   }
   
   deinit {

@@ -17,6 +17,7 @@ class RealtimeAudioRecorderView(
     private var audioRecorder: RealtimeAudioRecorder? = null
     private var visualization: AudioVisualization = WaveformVisualization()
     private var isRecording = false
+    private var isEchoCancellationEnabled = false
 
     init {
         setWillNotDraw(false)
@@ -26,6 +27,7 @@ class RealtimeAudioRecorderView(
         audioRecorder?.release()
         audioRecorder = RealtimeAudioRecorder(sampleRate, channelConfig, audioFormat).apply {
             delegate = this@RealtimeAudioRecorderView
+            isEchoCancellationEnabled = this@RealtimeAudioRecorderView.isEchoCancellationEnabled
         }
     }
 
@@ -77,6 +79,11 @@ class RealtimeAudioRecorderView(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         audioRecorder?.release()
+    }
+
+    fun setEchoCancellationEnabled(echoCancellationEnabled: Boolean) {
+        isEchoCancellationEnabled = echoCancellationEnabled
+        audioRecorder?.isEchoCancellationEnabled = echoCancellationEnabled
     }
 
 }

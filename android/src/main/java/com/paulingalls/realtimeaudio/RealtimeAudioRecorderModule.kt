@@ -23,12 +23,13 @@ class RealtimeAudioRecorderModule : Module() {
         }
 
         Class("RealtimeAudioRecorder", RealtimeAudioRecorder::class) {
-            Constructor { format: AudioFormatSettings ->
+            Constructor { format: AudioFormatSettings, echoCancellationEnabled: Boolean ->
                 return@Constructor RealtimeAudioRecorder(
                     format.sampleRate,
                     mapChannelCountToInputFormat(format.channelCount),
                     mapAudioEncodingToFormat(format.encoding)
                 ).apply {
+                    isEchoCancellationEnabled = echoCancellationEnabled
                     delegate = RealtimeEventDelegate(this@RealtimeAudioRecorderModule)
                 }
             }
@@ -46,6 +47,10 @@ class RealtimeAudioRecorderModule : Module() {
 
             Prop("waveformColor") { view: RealtimeAudioRecorderView, hexColor: String ->
                 view.setVisualizationColor(getAndroidColor(hexColor))
+            }
+
+            Prop("echoCancellationEnabled") { view: RealtimeAudioRecorderView, echoCancellationEnabled: Boolean ->
+                view.setEchoCancellationEnabled(echoCancellationEnabled)
             }
 
             Prop("audioFormat") { view: RealtimeAudioRecorderView,

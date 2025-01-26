@@ -21,6 +21,7 @@ class RealtimeAudioRecorder(
     private val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
 ) : SharedObject() {
     var delegate: RealtimeAudioBufferDelegate? = null
+    var isEchoCancellationEnabled = false
 
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
@@ -56,8 +57,12 @@ class RealtimeAudioRecorder(
 
     @SuppressLint("MissingPermission")
     private fun initializeAudioRecord() {
+        var source = MediaRecorder.AudioSource.MIC
+        if (isEchoCancellationEnabled) {
+            source = MediaRecorder.AudioSource.VOICE_COMMUNICATION
+        }
         audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            source,
             sampleRate,
             channelConfig,
             audioFormat,
