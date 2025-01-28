@@ -13,9 +13,9 @@ interface RealtimeAudioPlayerDelegate {
 }
 
 class RealtimeAudioPlayer(
-    private val sampleRate: Int,
-    private val channelConfig: Int,
-    private val audioFormat: Int
+    sampleRate: Int,
+    channelConfig: Int,
+    audioFormat: Int
 ) : SharedObject() {
     private var audioTrack: AudioTrack? = null
     private val bufferQueue = ConcurrentLinkedQueue<ByteArray>()
@@ -30,8 +30,8 @@ class RealtimeAudioPlayer(
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
             )
             .setAudioFormat(

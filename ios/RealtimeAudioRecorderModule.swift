@@ -22,7 +22,7 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         let recorder: RealtimeAudioRecorder = RealtimeAudioRecorder(sampleRate: audioFormat.sampleRate,
                                                                     channelCount: audioFormat.channelCount,
                                                                     audioFormat: getCommonFormat(audioFormat.encoding))!
-        recorder.echoCancellationEnabled = echoCancellationEnabled ?? false
+        recorder.echoCancellationEnabled = echoCancellationEnabled
         recorder.delegate = self
         return recorder
       }

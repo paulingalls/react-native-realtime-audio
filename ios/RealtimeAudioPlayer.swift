@@ -80,14 +80,6 @@ class RealtimeAudioPlayer: SharedObject {
       return
     }
     
-    //        do {
-    //          print("initial input format: \(engine.inputNode.outputFormat(forBus: 0))")
-    //          try engine.inputNode.setVoiceProcessingEnabled(true)
-    //        } catch {
-    //          print("Error setting voice processing enabled: \(error.localizedDescription)")
-    //        }
-    
-    playerNode.volume = 1.0
     print("output format: \(outputFormat.sampleRate) \(outputFormat.channelCount) \(outputFormat.commonFormat)")
     engine.attach(playerNode)
     engine.connect(playerNode, to: engine.mainMixerNode, format: outputFormat)

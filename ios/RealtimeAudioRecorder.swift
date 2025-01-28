@@ -67,7 +67,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
       print("Error starting audio engine: \(error.localizedDescription)")
     }
     
-    recorderDispatchQueue.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(2)) {
+    recorderDispatchQueue.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(200)) {
       while true {
         let _ = yield.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(100))
         let outputBuffer = audioConvertor.getNextBuffer()

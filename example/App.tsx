@@ -50,7 +50,7 @@ export default function App() {
         sampleRate: 24000,
         encoding: AudioEncoding.pcm16bitInteger,
         channelCount: 1
-      });
+      }, false) as RealtimeAudioRecorder;
     }
     await recorderRef.current?.startRecording();
   };

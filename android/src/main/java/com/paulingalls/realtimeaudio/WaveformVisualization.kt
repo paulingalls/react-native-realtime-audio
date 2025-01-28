@@ -4,7 +4,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 
 class WaveformVisualization : AudioVisualization {
     private val waveformPaint: Paint = Paint()
@@ -19,6 +21,48 @@ class WaveformVisualization : AudioVisualization {
             isAntiAlias = true
         }
     }
+
+    override fun getSamplesFromAudio(buffer: FloatArray, channelCount: Int, sampleCount: Int): ArrayList<FloatArray> {
+        val frameLength = buffer.size / channelCount
+        val pieceCount = frameLength / sampleCount
+        val samplePieces = ArrayList<FloatArray>()
+
+        for (pieceIndex in 0 until pieceCount) {
+            val pieceSamples = mutableListOf<Float>()
+
+            val startIndex = pieceIndex * sampleCount
+            val endIndex = min(startIndex + sampleCount, frameLength)
+
+            for (i in startIndex until endIndex) {
+                var sample = 0f
+                for (channel in 0 until channelCount) {
+                    sample += buffer[i * channelCount + channel]
+                }
+                sample /= channelCount.toFloat()
+                pieceSamples.add(sample)
+            }
+            samplePieces.add(pieceSamples.toFloatArray())
+        }
+
+        if (frameLength % sampleCount != 0) {
+            val remainingSamples = mutableListOf<Float>()
+
+            val startIndex = pieceCount * sampleCount
+
+            for (i in startIndex until frameLength) {
+                var sample = 0f
+                for (channel in 0 until channelCount) {
+                    sample += buffer[i * channelCount + channel]
+                }
+                sample /= channelCount.toFloat()
+                remainingSamples.add(sample)
+            }
+            samplePieces.add(remainingSamples.toFloatArray())
+        }
+
+        return samplePieces
+    }
+
 
     override fun updateData(data: FloatArray) {
         waveformData = data

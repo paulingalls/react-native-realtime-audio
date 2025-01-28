@@ -4,10 +4,14 @@ import RealtimeAudioPlayer
 import RealtimeAudioPlayerDelegate
 import android.content.Context
 import android.graphics.Canvas
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import convertByteArrayToFloatArray
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
+import kotlin.math.min
 
 class RealtimeAudioPlayerView(
     context: Context, appContext: AppContext
@@ -17,7 +21,11 @@ class RealtimeAudioPlayerView(
     private val onPlaybackStopped by EventDispatcher()
     private var audioPlayer: RealtimeAudioPlayer? = null
     private var visualization: AudioVisualization = WaveformVisualization()
+    private var audioChunks: ArrayList<FloatArray> = ArrayList()
+    private val handler = Handler(Looper.getMainLooper())
     private var isPlaying = false
+    private var channelCount: Int = 1
+    private var sampleRate: Int = 0
 
     init {
         setWillNotDraw(false)
@@ -28,6 +36,8 @@ class RealtimeAudioPlayerView(
         audioPlayer = RealtimeAudioPlayer(sampleRate, channelConfig, audioFormat).apply {
             delegate = this@RealtimeAudioPlayerView
         }
+        channelCount = channelConfig
+        this.sampleRate = sampleRate
     }
 
     fun setVisualizationColor(color: Int) {
@@ -61,27 +71,33 @@ class RealtimeAudioPlayerView(
         isPlaying = false
         onPlaybackStopped(mapOf())
         visualization.updateData(FloatArray(0))
+        audioChunks.clear()
         postInvalidate()
     }
 
     override fun bufferReady(buffer: ByteArray) {
         val floatArray = convertByteArrayToFloatArray(buffer)
-        visualization.updateData(floatArray)
-        postInvalidate()
+        val sampleCount = width / 2
+        val newChunks = visualization.getSamplesFromAudio(floatArray, channelCount, sampleCount)
+        val chunkDuration =
+            ((floatArray.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
+        var timeOfNextChunk = 0L
+        audioChunks.addAll(newChunks)
+        for (chunkIndex in 0 until newChunks.size) {
+            handler.postDelayed({
+                postInvalidateOnAnimation()
+            }, timeOfNextChunk)
+            timeOfNextChunk += chunkDuration
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (isPlaying) {
+        if (isPlaying && audioChunks.size > 0) {
+            val chunk = audioChunks.removeAt(0)
+            visualization.updateData(chunk)
             visualization.draw(canvas, width.toFloat(), height.toFloat())
         }
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val width = resolveSize(200, widthMeasureSpec)
-        val height = resolveSize(100, heightMeasureSpec)
-        setMeasuredDimension(width, height)
     }
 
     override fun onDetachedFromWindow() {
