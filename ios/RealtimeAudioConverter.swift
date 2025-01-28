@@ -33,7 +33,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
     for buffer in bufferQueue {
       bufferDuration += Float32(buffer.frameLength) / Float32(inputFormat.sampleRate)
     }
-    return bufferDuration > 0.9
+    return bufferDuration > 1.0
   }
   
   func clear() {
