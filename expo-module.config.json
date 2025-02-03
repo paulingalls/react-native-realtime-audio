@@ -8,14 +8,16 @@
     "modules": [
       "RealtimeAudioModule",
       "RealtimeAudioPlayerModule",
-      "RealtimeAudioRecorderModule"
+      "RealtimeAudioRecorderModule",
+      "RealtimeAudioVADRecorderModule"
     ]
   },
   "android": {
     "modules": [
       "com.paulingalls.realtimeaudio.RealtimeAudioModule",
       "com.paulingalls.realtimeaudio.RealtimeAudioPlayerModule",
-      "com.paulingalls.realtimeaudio.RealtimeAudioRecorderModule"
+      "com.paulingalls.realtimeaudio.RealtimeAudioRecorderModule",
+      "com.paulingalls.realtimeaudio.RealtimeAudioVADRecorderModule"
     ]
   }
 }

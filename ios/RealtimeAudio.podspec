@@ -19,6 +19,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.dependency 'onnxruntime-objc'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
@@ -26,4 +27,9 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  s.resource_bundles = {
+    'RealtimeAudio' => [
+      '**/*.onnx'
+    ]
+  }
 end

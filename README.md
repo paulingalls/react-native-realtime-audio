@@ -4,8 +4,18 @@ A React Native Expo module for real-time audio playback and recording, as well a
 This module provides components for streaming and playing audio buffers in real-time, with optional waveform visualization.
 It also includes components for recording audio buffers in real-time, with optional waveform visualization.
 
+## Requirements
+- Node 22 (for support of bun in corepack)
+- Expo SDK 50 or higher
+- iOS 15.1 or higher
+- Android API level 26 or higher
+
 ## Installation
 
+```bash
+bunx expo install react-native-realtime-audio
+```
+or
 ```bash
 npx expo install react-native-realtime-audio
 ```
@@ -15,6 +25,7 @@ npx expo install react-native-realtime-audio
 - Real-time audio playback from base64-encoded buffers
 - Real-time audio recording to base64-encoded buffers
 - Configurable sample rate, audio encoding, and channel count
+- Suport for echo cancellation and noise suppression
 - Built-in waveform visualization component for both playback and recording
 - Simple, easy-to-use API
 
@@ -250,12 +261,6 @@ bun install
 bun run android
 bun run ios
 ```
-
-## Requirements
-
-- Expo SDK 50 or higher
-- iOS 15.1 or higher
-- Android API level 26 or higher
 
 ## License
 

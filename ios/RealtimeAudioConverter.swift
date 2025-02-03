@@ -22,7 +22,12 @@ class RealtimeAudioConverter: @unchecked Sendable {
   
   func addBuffer(_ buffer: AVAudioPCMBuffer) {
     bufferQueue.append(buffer)
+    print("bufferQueue count: \(bufferQueue.count)")
     semaphore.signal()
+  }
+  
+  func getDepth() -> Int {
+    return bufferQueue.count
   }
   
   func isReady() -> Bool {
@@ -48,7 +53,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
   func getNextBuffer() -> AVAudioPCMBuffer? {
     inputBufferLock.lock()
     if currentInputBuffer == nil {
-      let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(200))
+      let result = semaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(1))
       if bufferQueue.isEmpty || result == .timedOut {
         inputBufferLock.unlock()
         print("getNextBuffer cleared lock with empty queue")
@@ -99,6 +104,7 @@ class RealtimeAudioConverter: @unchecked Sendable {
             return tempBuffer
           }
           self.currentInputBuffer = self.bufferQueue.removeFirst()
+          print("removed buffer from queue (size: \(self.bufferQueue.count))")
           
           let samplesDesired = numSamplesNeeded - samplesToCopy
           let samplesRemaining = self.currentInputBuffer!.frameLength

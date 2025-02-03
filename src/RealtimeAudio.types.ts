@@ -11,6 +11,12 @@ export type RealtimeAudioRecorderModuleEvents = {
   onCaptureComplete: () => void;
 }
 
+export type RealtimeAudioVADRecorderModuleEvents = {
+  onVoiceCaptured: (payload: RealtimeAudioCapturedEventPayload) => void;
+  onVoiceStarted: () => void;
+  onVoiceEnded: () => void;
+}
+
 export type RealtimeAudioCapturedEventPayload = {
   audioBuffer: string;
 };

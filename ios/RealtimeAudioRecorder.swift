@@ -13,7 +13,8 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
   private let outputFormat: AVAudioFormat
   private var isRecording: Bool = false
   private let recorderDispatchQueue = DispatchQueue(label: "os.react-native-real-time-audio.recorder-queue")
-  
+  private var waitTimeout: Int = 100
+
   
   init?(sampleRate: Double = 24000,
         channelCount: UInt32 = 1,
@@ -47,6 +48,15 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     let tapBlock: AVAudioNodeTapBlock = { (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
       tapQueue.async {
         audioConvertor.addBuffer(buffer)
+        let depth = audioConvertor.getDepth()
+        if depth > 8 {
+          self.waitTimeout = 70
+        } else if depth < 4 {
+          self.waitTimeout = 130
+        } else {
+          self.waitTimeout = 100
+        }
+
         self.delegate?.bufferCaptured(buffer)
       }
     }
@@ -69,7 +79,7 @@ class RealtimeAudioRecorder: SharedObject, @unchecked Sendable {
     
     recorderDispatchQueue.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(200)) {
       while true {
-        let _ = yield.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(100))
+        let _ = yield.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(self.waitTimeout))
         let outputBuffer = audioConvertor.getNextBuffer()
         if outputBuffer == nil {
           if (!self.isRecording) {

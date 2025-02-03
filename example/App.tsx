@@ -10,7 +10,7 @@ import {
   RealtimeAudioPlayer,
   RealtimeAudioRecorder,
   RealtimeAudioRecorderViewRef,
-  RealtimeAudioCapturedEventPayload
+  RealtimeAudioCapturedEventPayload, RealtimeAudioVADRecorder, RealtimeAudioVADRecorderModule
 } from "react-native-realtime-audio";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
@@ -25,15 +25,29 @@ export default function App() {
   const audioViewRef = useRef<RealtimeAudioPlayerViewRef>(null);
   const recorderViewRef = useRef<RealtimeAudioRecorderViewRef>(null);
   const recorderRef = useRef<RealtimeAudioRecorder>(null);
+  const vadRecorderRef = useRef<RealtimeAudioVADRecorder>(null);
   const playerRef = useRef<RealtimeAudioPlayer>(null);
   const [transcript, setTranscript] = useState<string>("");
   const [recordedBuffers, setRecordedBuffers] = useState<string[]>([]);
+  const [hasVoice, setHasVoice] = useState<boolean>(false);
   const audioPayload = useEvent(RealtimeAudioRecorderModule, "onAudioCaptured");
+  const vadPayload = useEvent(RealtimeAudioVADRecorderModule, "onVoiceCaptured");
   useEventListener(RealtimeAudioRecorderModule, "onCaptureComplete", () => {
     for (const buffer of recordedBuffers) {
       audioViewRef.current?.addBuffer(buffer);
     }
     setRecordedBuffers([]);
+  });
+  useEventListener(RealtimeAudioVADRecorderModule, "onVoiceEnded", () => {
+    for (const buffer of recordedBuffers) {
+      audioViewRef.current?.addBuffer(buffer);
+    }
+    setRecordedBuffers([]);
+    setHasVoice(false);
+  });
+  useEventListener(RealtimeAudioVADRecorderModule, "onVoiceStarted", () => {
+    console.log("RealtimeAudio VAD detected voice started event");
+    setHasVoice(true);
   });
   useEventListener(RealtimeAudioPlayerModule, "onPlaybackStarted", () => {
     console.log("RealtimeAudio playback started event");
@@ -58,6 +72,24 @@ export default function App() {
   const stopRecordingAudio = async () => {
     console.log("Stopping recording audio...");
     await recorderRef.current?.stopRecording();
+  };
+
+  const listenForVoice = async () => {
+    console.log("Listening for voice...");
+    if (vadRecorderRef.current === null) {
+      // @ts-ignore
+      vadRecorderRef.current = new RealtimeAudioVADRecorderModule.RealtimeAudioVADRecorder({
+        sampleRate: 24000,
+        encoding: AudioEncoding.pcm16bitInteger,
+        channelCount: 1
+      }, true) as RealtimeAudioVADRecorder;
+    }
+    await vadRecorderRef.current?.startListening();
+  }
+
+  const stopListeningForVoice = async () => {
+    console.log("Stopping listening for voice...");
+    await vadRecorderRef.current?.stopListening();
   };
 
   const playAudio = async () => {
@@ -160,6 +192,13 @@ export default function App() {
   }, [audioPayload]);
 
   useEffect(() => {
+    if (vadPayload) {
+      console.log("VAD payload received");
+      setRecordedBuffers((prev) => [...prev, vadPayload.audioBuffer]);
+    }
+  }, [vadPayload]);
+
+  useEffect(() => {
     const checkPermissions = async () => {
       const result = await RealtimeAudioModule.checkAndRequestAudioPermissions();
       console.log("Permissions result", result);
@@ -171,6 +210,23 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Module API Example</Text>
+        <Group name="RealtimeAudioVADRecorder">
+          <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
+            <Button
+              title="Listen for Voice"
+              onPress={async () => {
+                await listenForVoice();
+              }}
+            />
+            <Button
+              title="Stop Listening"
+              onPress={async () => {
+                await stopListeningForVoice();
+              }}
+            />
+          </View>
+          <Text>{hasVoice ? "VOICE" : "NO VOICE"}</Text>
+        </Group>
         <Group name="RealtimeAudioRecorder">
           <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
             <Button
