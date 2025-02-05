@@ -39,6 +39,7 @@ export default function App() {
     setRecordedBuffers([]);
   });
   useEventListener(RealtimeAudioVADRecorderModule, "onVoiceEnded", () => {
+    console.log("RealtimeAudio VAD detected voice ended event");
     for (const buffer of recordedBuffers) {
       audioViewRef.current?.addBuffer(buffer);
     }

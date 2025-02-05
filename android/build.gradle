@@ -40,4 +40,23 @@ android {
   lintOptions {
     abortOnError false
   }
+
+  sourceSets {
+    main {
+      assets.srcDirs = ['src/main/assets']
+    }
+  }
+
+  repositories {
+    google()
+    mavenCentral()
+    maven {
+      url "https://www.beatunes.com/repo/maven2"
+    }
+  }
+
+  dependencies {
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.20.0'
+    implementation 'com.tagtraum:pcmsampledsp:0.9.5'
+  }
 }

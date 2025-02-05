@@ -174,3 +174,9 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+repositories {
+    maven {
+        url "https://www.beatunes.com/repo/maven2"
+    }
+}
