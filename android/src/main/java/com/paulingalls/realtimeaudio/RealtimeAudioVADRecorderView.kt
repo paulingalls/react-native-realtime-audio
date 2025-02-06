@@ -2,31 +2,29 @@ package com.paulingalls.realtimeaudio
 
 import android.content.Context
 import android.graphics.Canvas
-import android.media.AudioFormat
 import android.os.Handler
 import android.os.Looper
-import convertByteArrayOfShortsToFloatArray
-import convertByteArrayToFloatArray
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 
-class RealtimeAudioRecorderView(
+class RealtimeAudioVADRecorderView(
     context: Context,
     appContext: AppContext
 ) : ExpoView(context, appContext),
-    RealtimeAudioBufferDelegate {
-    private val onAudioCaptured by EventDispatcher<Map<String, String>>()
-    private val onCaptureComplete by EventDispatcher()
-    private var audioRecorder: RealtimeAudioRecorder? = null
+    RealtimeAudioVoiceDelegate {
+    private val onVoiceCaptured by EventDispatcher<Map<String, String>>()
+    private val onVoiceStarted by EventDispatcher()
+    private val onVoiceEnded by EventDispatcher()
+    private var audioRecorder: RealtimeAudioVADRecorder? = null
     private var visualization: AudioVisualization = WaveformVisualization()
     private var audioChunks: ArrayList<FloatArray> = ArrayList()
     private val handler = Handler(Looper.getMainLooper())
-    private var isRecording = false
+    private var isListening = false
     private var isEchoCancellationEnabled = false
     private var channelCount: Int = 1
     private var sampleRate: Int = 0
-    private var audioFormat: Int = 0
+    private var modelPath: String = ""
 
     init {
         setWillNotDraw(false)
@@ -34,13 +32,13 @@ class RealtimeAudioRecorderView(
 
     fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
         audioRecorder?.release()
-        audioRecorder = RealtimeAudioRecorder(sampleRate, channelConfig, audioFormat).apply {
-            delegate = this@RealtimeAudioRecorderView
-            isEchoCancellationEnabled = this@RealtimeAudioRecorderView.isEchoCancellationEnabled
+        audioRecorder = RealtimeAudioVADRecorder(sampleRate, channelConfig, audioFormat).apply {
+            delegate = this@RealtimeAudioVADRecorderView
+            isEchoCancellationEnabled = this@RealtimeAudioVADRecorderView.isEchoCancellationEnabled
+            modelPath = this@RealtimeAudioVADRecorderView.modelPath
         }
         channelCount = channelConfig
         this.sampleRate = sampleRate
-        this.audioFormat = audioFormat
     }
 
     fun setVisualizationColor(color: Int) {
@@ -48,33 +46,28 @@ class RealtimeAudioRecorderView(
         invalidate()
     }
 
-    fun startRecording() {
-        isRecording = true
-        audioRecorder?.startRecording()
+    fun startListening() {
+        isListening = true
+        audioRecorder?.modelPath = modelPath
+        audioRecorder?.startListening()
         postInvalidate()
     }
 
-    fun stopRecording() {
-        isRecording = false
-        audioRecorder?.stopRecording()
+    fun stopListening() {
+        isListening = false
+        audioRecorder?.stopListening()
         postInvalidate()
     }
 
     override fun audioStringReady(base64Audio: String) {
-        onAudioCaptured(mapOf("audioBuffer" to base64Audio))
+        onVoiceCaptured(mapOf("audioBuffer" to base64Audio))
     }
 
-    override fun bufferReady(buffer: ByteArray) {
-        val floatArray: FloatArray
-        if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
-            floatArray = convertByteArrayOfShortsToFloatArray(buffer)
-        } else {
-            floatArray = convertByteArrayToFloatArray(buffer)
-        }
+    override fun voiceBufferReady(buffer: FloatArray) {
         val sampleCount = width / 2
-        val newChunks = visualization.getSamplesFromAudio(floatArray, channelCount, sampleCount)
+        val newChunks = visualization.getSamplesFromAudio(buffer, channelCount, sampleCount)
         val chunkDuration =
-            ((floatArray.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
+            ((buffer.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
         var timeOfNextChunk = 0L
         audioChunks.addAll(newChunks)
         for (chunkIndex in 0 until newChunks.size) {
@@ -85,15 +78,20 @@ class RealtimeAudioRecorderView(
         }
     }
 
-    override fun captureComplete() {
+    override fun voiceStarted() {
+        onVoiceStarted(mapOf())
+    }
+
+    override fun voiceStopped() {
         visualization.updateData(FloatArray(0))
         audioChunks.clear()
-        onCaptureComplete(mapOf())
+        onVoiceEnded(mapOf())
+        postInvalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (isRecording && audioChunks.size > 0) {
+        if (isListening && audioChunks.size > 0) {
             val chunk = audioChunks.removeAt(0)
             visualization.updateData(chunk)
             visualization.draw(canvas, width.toFloat(), height.toFloat())
@@ -110,4 +108,7 @@ class RealtimeAudioRecorderView(
         audioRecorder?.isEchoCancellationEnabled = echoCancellationEnabled
     }
 
+    fun setModelPath(modelPath: String) {
+        this.modelPath = modelPath
+    }
 }

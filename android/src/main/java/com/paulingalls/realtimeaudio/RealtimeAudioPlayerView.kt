@@ -4,14 +4,14 @@ import RealtimeAudioPlayer
 import RealtimeAudioPlayerDelegate
 import android.content.Context
 import android.graphics.Canvas
+import android.media.AudioFormat
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import convertByteArrayOfShortsToFloatArray
 import convertByteArrayToFloatArray
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
-import kotlin.math.min
 
 class RealtimeAudioPlayerView(
     context: Context, appContext: AppContext
@@ -26,6 +26,7 @@ class RealtimeAudioPlayerView(
     private var isPlaying = false
     private var channelCount: Int = 1
     private var sampleRate: Int = 0
+    private var audioFormat: Int = 0
 
     init {
         setWillNotDraw(false)
@@ -38,6 +39,7 @@ class RealtimeAudioPlayerView(
         }
         channelCount = channelConfig
         this.sampleRate = sampleRate
+        this.audioFormat = audioFormat
     }
 
     fun setVisualizationColor(color: Int) {
@@ -76,7 +78,12 @@ class RealtimeAudioPlayerView(
     }
 
     override fun bufferReady(buffer: ByteArray) {
-        val floatArray = convertByteArrayToFloatArray(buffer)
+        val floatArray: FloatArray
+        if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
+            floatArray = convertByteArrayOfShortsToFloatArray(buffer)
+        } else {
+            floatArray = convertByteArrayToFloatArray(buffer)
+        }
         val sampleCount = width / 2
         val newChunks = visualization.getSamplesFromAudio(floatArray, channelCount, sampleCount)
         val chunkDuration =

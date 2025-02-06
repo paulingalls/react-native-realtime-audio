@@ -49,7 +49,7 @@ class RealtimeAudioPlayer(
     fun addBuffer(base64EncodedBuffer: String) {
         val decodedBuffer = Base64.decode(base64EncodedBuffer, Base64.DEFAULT)
         bufferQueue.offer(decodedBuffer)
-        if (!isPlaying && !isPaused) {
+        if (!isPlaying && !isPaused && bufferQueue.size > 2) {
             startPlayback()
         }
     }

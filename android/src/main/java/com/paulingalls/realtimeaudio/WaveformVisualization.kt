@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 

@@ -3,6 +3,7 @@ package com.paulingalls.realtimeaudio
 import AudioFormatSettings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import getAndroidColor
 import mapAudioEncodingToFormat
 import mapChannelCountToInputFormat
 
@@ -46,6 +47,38 @@ class RealtimeAudioVADRecorderModule : Module() {
                 recorder.stopListening()
             }
         }
+
+        View(RealtimeAudioVADRecorderView::class) {
+            Events("onVoiceCaptured", "onVoiceStarted", "onVoiceEnded")
+
+            Prop("waveformColor") { view: RealtimeAudioVADRecorderView, hexColor: String ->
+                view.setVisualizationColor(getAndroidColor(hexColor))
+            }
+
+            Prop("echoCancellationEnabled") { view: RealtimeAudioVADRecorderView, echoCancellationEnabled: Boolean ->
+                view.setEchoCancellationEnabled(echoCancellationEnabled)
+            }
+
+            Prop("audioFormat") { view: RealtimeAudioVADRecorderView,
+                                  format: AudioFormatSettings ->
+                view.setModelPath(modelPath!!)
+                view.setAudioFormat(
+                    format.sampleRate,
+                    mapChannelCountToInputFormat(format.channelCount),
+                    mapAudioEncodingToFormat(format.encoding)
+                )
+            }
+
+            AsyncFunction("startListening") { view: RealtimeAudioVADRecorderView ->
+                view.setModelPath(modelPath!!)
+                view.startListening()
+            }
+
+            AsyncFunction("stopListening") { view: RealtimeAudioVADRecorderView ->
+                view.stopListening()
+            }
+        }
+
     }
 
     class RealtimeVADEventDelegate(

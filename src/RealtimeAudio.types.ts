@@ -40,7 +40,6 @@ export type RealtimeAudioVADRecorderViewRef = {
 
 export enum AudioEncoding {
   pcm16bitInteger = "pcm16bitInteger",
-  pcm32bitInteger = "pcm32bitInteger",
   pcm32bitFloat = "pcm32bitFloat",
 }
 

@@ -17,6 +17,7 @@ export default function Tab() {
   const vadRecorderViewRef = useRef<RealtimeAudioVADRecorderViewRef>(null);
   const [recordedBuffers, setRecordedBuffers] = useState<string[]>([]);
   const [hasVoice, setHasVoice] = useState<boolean>(false);
+  const [isListening, setIsListening] = useState<boolean>(false);
 
   const vadPayload = useEvent(RealtimeAudioVADRecorderModule, "onVoiceCaptured");
 
@@ -44,11 +45,13 @@ export default function Tab() {
       }, true) as RealtimeAudioVADRecorder;
     }
     await vadRecorderRef.current?.startListening();
+    setIsListening(true);
   };
 
   const stopListeningForVoice = async () => {
     console.log("Stopping listening for voice...");
     await vadRecorderRef.current?.stopListening();
+    setIsListening(false);
   };
 
   useEffect(() => {
@@ -62,6 +65,9 @@ export default function Tab() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>VAD Example</Text>
+        <Text style={styles.voice}>
+          {isListening ? `Listening - ${hasVoice ? "VOICE" : "NO VOICE"}` : "Not Listening"}
+        </Text>
         <Group name="RealtimeAudioVADRecorder">
           <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
             <Button
@@ -77,7 +83,6 @@ export default function Tab() {
               }}
             />
           </View>
-          <Text style={styles.voice}>{hasVoice ? "VOICE" : "NO VOICE"}</Text>
         </Group>
         <Group name="RealtimeAudioVADRecorderView">
           <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
@@ -86,6 +91,7 @@ export default function Tab() {
               onPress={() => {
                 console.log("Starting listening in view...");
                 vadRecorderViewRef.current?.startListening();
+                setIsListening(true)
               }}
             />
             <Button
@@ -93,10 +99,10 @@ export default function Tab() {
               onPress={() => {
                 console.log("Stopping listening in view...");
                 vadRecorderViewRef.current?.stopListening();
+                setIsListening(false)
               }}
             />
           </View>
-          <Text style={styles.voice}>{hasVoice ? "VOICE" : "NO VOICE"}</Text>
           <RealtimeAudioVADRecorderView
             ref={vadRecorderViewRef}
             waveformColor={"#0e2655"}
@@ -185,7 +191,6 @@ const styles = StyleSheet.create({
   voice: {
     textAlign: "center",
     fontWeight: "bold",
-    lineHeight: 30,
   },
   view: {
     flex: 1,

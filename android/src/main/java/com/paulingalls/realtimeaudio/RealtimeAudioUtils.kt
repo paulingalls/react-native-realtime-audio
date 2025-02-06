@@ -56,9 +56,19 @@ fun mapChannelCountToInputFormat(channelCount: Int): Int {
 }
 
 fun convertByteArrayToFloatArray(byteArray: ByteArray): FloatArray {
+    require(byteArray.size % 4 == 0) { "Byte array length must be a multiple of 4" }
     return FloatArray(byteArray.size / 4) { i ->
         ByteBuffer.wrap(byteArray, i * 4, 4).order(ByteOrder.LITTLE_ENDIAN).float
     }
+}
+
+fun convertByteArrayOfShortsToFloatArray(byteArray: ByteArray): FloatArray {
+    val shortArray = ByteBuffer.wrap(byteArray).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+    val floatArray = FloatArray(shortArray.remaining())
+    for (i in floatArray.indices) {
+        floatArray[i] = shortArray.get(i).toFloat() / Short.MAX_VALUE
+    }
+    return floatArray
 }
 
 fun convertShortArrayToByteArray(shortArray: ShortArray): ByteArray {

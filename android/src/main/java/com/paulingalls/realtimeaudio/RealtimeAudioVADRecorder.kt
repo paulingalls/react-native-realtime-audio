@@ -6,13 +6,19 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Base64
 import com.tagtraum.pcmsampledsp.Rational
-import expo.modules.kotlin.sharedobjects.SharedObject
-import kotlinx.coroutines.*
-import java.nio.ByteBuffer
 import com.tagtraum.pcmsampledsp.Resampler
 import convertByteArrayToFloatArray
 import convertFloatArrayToByteArray
 import convertShortArrayToByteArray
+import expo.modules.kotlin.sharedobjects.SharedObject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
 
 interface RealtimeAudioVoiceDelegate {
     fun audioStringReady(base64Audio: String)
@@ -115,43 +121,49 @@ class RealtimeAudioVADRecorder(
     private fun startRecordingJob() {
         recordingJob = recordingScope.launch {
             val buffer = ByteBuffer.allocateDirect(bufferSize)
-            val byteArray = ByteArray(bufferSize)
-
+            val vadBufferSize = 512 * Float.SIZE_BYTES
             while (isActive) {
-                val readResult = audioRecord?.read(buffer, bufferSize) ?: -1
+                val bufferLength = audioRecord?.read(buffer, bufferSize) ?: -1
 
-                if (readResult > 0) {
-                    buffer.get(byteArray, 0, readResult)
-                    val floatArray = convertByteArrayToFloatArray(byteArray)
-                    val hasVoice = vadIterator?.predict(floatArray)
-                    if (hasVoice == true) {
-                        if (!isSpeaking) {
-                            delegate?.voiceStarted()
-                            isSpeaking = true
-                        }
-                        val resampledBufferSize = floatArray.size * sampleRate / VAD_SAMPLE_RATE
-                        val resampled = getResampledBuffer(floatArray, resampledBufferSize)
-                        delegate?.voiceBufferReady(resampled)
-                        var bitsArray: ByteArray
-                        if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
-                            val shortArray = ShortArray(resampled.size) { i ->
-                                (resampled[i] * Short.MAX_VALUE).toInt().toShort()
+                if (bufferLength > 0 && bufferLength % vadBufferSize == 0) {
+                    var position = 0
+                    while( position < bufferLength - 1) {
+                        val chunkSize = minOf(vadBufferSize, bufferLength - position)
+                        val byteArray = ByteArray(chunkSize)
+                        buffer.get(byteArray, 0, chunkSize)
+                        position += chunkSize
+                        val floatArray = convertByteArrayToFloatArray(byteArray)
+                        val hasVoice = vadIterator?.predict(floatArray)
+                        if (hasVoice == true) {
+                            if (!isSpeaking) {
+                                delegate?.voiceStarted()
+                                isSpeaking = true
                             }
-                            bitsArray = convertShortArrayToByteArray(shortArray)
+                            val resampledBufferSize = floatArray.size * sampleRate / VAD_SAMPLE_RATE
+                            val resampled = getResampledBuffer(floatArray, resampledBufferSize)
+                            delegate?.voiceBufferReady(resampled)
+                            var bitsArray: ByteArray
+                            if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
+                                val shortArray = ShortArray(resampled.size) { i ->
+                                    (resampled[i] * Short.MAX_VALUE).toInt().toShort()
+                                }
+                                bitsArray = convertShortArrayToByteArray(shortArray)
+                            } else {
+                                bitsArray = convertFloatArrayToByteArray(resampled)
+                            }
+                            val base64Data =
+                                Base64.encodeToString(bitsArray, 0, bitsArray.size, Base64.NO_WRAP)
+                            delegate?.audioStringReady(base64Data)
                         } else {
-                            bitsArray = convertFloatArrayToByteArray(resampled)
-                        }
-                        val base64Data = Base64.encodeToString(bitsArray, 0, bitsArray.size, Base64.NO_WRAP)
-                        delegate?.audioStringReady(base64Data)
-                    } else {
-                        if (isSpeaking) {
-                            delegate?.voiceStopped()
-                            isSpeaking = false
+                            if (isSpeaking) {
+                                delegate?.voiceStopped()
+                                isSpeaking = false
+                            }
                         }
                     }
                     buffer.clear()
                 } else {
-                    print("Error reading audio data: $readResult")
+                    print("Error reading audio data: $bufferLength")
                 }
             }
         }
