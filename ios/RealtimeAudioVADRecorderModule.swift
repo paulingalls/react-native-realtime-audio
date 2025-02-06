@@ -36,6 +36,42 @@ public class RealtimeAudioVADRecorderModule: Module, RealtimeAudioVADRecorderDel
       }
     }
     
+    View(RealtimeAudioVADRecorderView.self) {
+      Events("onVoiceStarted", "onVoiceEnded", "onVoiceCaptured")
+
+      Prop("waveformColor") { (
+        view: RealtimeAudioVADRecorderView,
+        hexColor: UIColor
+      ) in
+        view.setWaveformColor(hexColor)
+      }
+      
+      Prop("audioFormat") { (
+        view: RealtimeAudioVADRecorderView,
+        format: AudioFormatSettings
+      ) in
+        view.setAudioFormat(
+          sampleRate: format.sampleRate,
+          commonFormat: self.getCommonFormat(format.encoding),
+          channels: format.channelCount
+        )
+      }
+      
+      Prop("echoCancellationEnabled") { (
+        view: RealtimeAudioVADRecorderView,
+        enabled: Bool
+      ) in
+        view.setEchoCancellationEnabled(enabled)
+      }
+      
+      AsyncFunction("startListening") { (view: RealtimeAudioVADRecorderView) in
+        view.startListening()
+      }
+      
+      AsyncFunction("stopListening") { (view: RealtimeAudioVADRecorderView) in
+        view.stopListening()
+      }
+    }
   }
   
   func base64VoiceBufferReady(_ base64Audio: String) {

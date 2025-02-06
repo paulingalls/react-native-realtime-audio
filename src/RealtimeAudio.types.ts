@@ -33,6 +33,11 @@ export type RealtimeAudioRecorderViewRef = {
   stopRecording: () => void;
 }
 
+export type RealtimeAudioVADRecorderViewRef = {
+  startListening: () => void;
+  stopListening: () => void;
+}
+
 export enum AudioEncoding {
   pcm16bitInteger = "pcm16bitInteger",
   pcm32bitInteger = "pcm32bitInteger",
@@ -60,4 +65,14 @@ export type RealtimeAudioRecorderViewProps = {
   echoCancellationEnabled?: boolean;
   onAudioCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
   onCaptureComplete?: () => void;
+} & ViewProps;
+
+export type RealtimeAudioVADRecorderViewProps = {
+  audioFormat: AudioFormat;
+  ref?: Ref<RealtimeAudioVADRecorderViewRef>;
+  waveformColor?: string;
+  echoCancellationEnabled?: boolean;
+  onVoiceCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
+  onVoiceStarted?: () => void;
+  onVoiceEnded?: () => void;
 } & ViewProps;

@@ -175,6 +175,7 @@ dependencies {
     }
 }
 
+
 repositories {
     maven {
         url "https://www.beatunes.com/repo/maven2"

@@ -89,7 +89,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
           voiceConverter.addBuffer(buffer)
         } else {
           self.bufferCache.append(buffer)
-          if self.bufferCache.count > 5 {
+          if self.bufferCache.count > 8 {
             self.bufferCache.removeFirst()
           }
         }

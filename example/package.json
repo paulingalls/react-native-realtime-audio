@@ -1,7 +1,7 @@
 {
   "name": "realtime-audio-example",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "prebuild": "expo prebuild",
     "start": "expo start",
@@ -10,16 +10,24 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~52.0.25",
-    "openai-react-native": "^0.3.6",
+    "expo": "52.0.30",
+    "expo-constants": "17.0.5",
+    "expo-linking": "7.0.5",
+    "expo-router": "4.0.17",
+    "expo-status-bar": "2.0.1",
+    "openai-react-native": "0.3.7",
     "react": "18.3.1",
-    "react-native": "0.76.6",
-    "react-native-sse": "^1.2.1"
+    "react-dom": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-safe-area-context": "5.2.0",
+    "react-native-screens": "4.6.0",
+    "react-native-sse": "1.2.1",
+    "react-native-web": "~0.19.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@types/react": "~18.3.12",
-    "typescript": "^5.7.2"
+    "@babel/core": "7.26.7",
+    "@types/react": "18.3.12",
+    "typescript": "5.7.3"
   },
   "private": true,
   "expo": {

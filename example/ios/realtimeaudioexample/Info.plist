@@ -46,6 +46,10 @@
     </dict>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow Example to record audio</string>
+    <key>NSUserActivityTypes</key>
+    <array>
+      <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
+    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

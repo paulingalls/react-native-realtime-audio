@@ -8,7 +8,8 @@
   },
   "main": "build/index.js",
   "devDependencies": {
-    "expo-module-scripts": "4.0.3"
+    "expo-module-scripts": "4.0.3",
+    "@types/react": "18.3.18"
   },
   "peerDependencies": {
     "expo": "*",

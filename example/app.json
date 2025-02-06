@@ -7,12 +7,21 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "RTAudio",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "plugins": [["../app.plugin.js", { "microphonePermission": "Allow Example to record audio" }]],
+    "plugins": [
+      [
+        "../app.plugin.js",
+        {
+          "microphonePermission": "Allow Example to record audio"
+        }
+      ],
+      "expo-router"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.paulingalls.realtimeaudio.example"
@@ -25,6 +34,7 @@
       "package": "com.paulingalls.realtimeaudio.example"
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
     }
   }
