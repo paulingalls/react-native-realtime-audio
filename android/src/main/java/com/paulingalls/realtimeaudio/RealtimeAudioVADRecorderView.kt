@@ -2,6 +2,7 @@ package com.paulingalls.realtimeaudio
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import expo.modules.kotlin.AppContext
@@ -17,7 +18,7 @@ class RealtimeAudioVADRecorderView(
     private val onVoiceStarted by EventDispatcher()
     private val onVoiceEnded by EventDispatcher()
     private var audioRecorder: RealtimeAudioVADRecorder? = null
-    private var visualization: AudioVisualization = WaveformVisualization()
+    private var visualization: AudioVisualization = LinearWaveformVisualizer()
     private var audioChunks: ArrayList<FloatArray> = ArrayList()
     private val handler = Handler(Looper.getMainLooper())
     private var isListening = false
@@ -25,9 +26,11 @@ class RealtimeAudioVADRecorderView(
     private var channelCount: Int = 1
     private var sampleRate: Int = 0
     private var modelPath: String = ""
+    private var mainColor: Int = Color.BLUE
 
     init {
         setWillNotDraw(false)
+        visualization.setColor(mainColor)
     }
 
     fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
@@ -42,7 +45,14 @@ class RealtimeAudioVADRecorderView(
     }
 
     fun setVisualizationColor(color: Int) {
+        mainColor = color
         visualization.setColor(color)
+        invalidate()
+    }
+
+    fun setVisualizer(visualization: BaseVisualization) {
+        this.visualization = visualization
+        this.visualization.setColor(mainColor)
         invalidate()
     }
 
@@ -65,7 +75,7 @@ class RealtimeAudioVADRecorderView(
 
     override fun voiceBufferReady(buffer: FloatArray) {
         val sampleCount = width / 2
-        val newChunks = visualization.getSamplesFromAudio(buffer, channelCount, sampleCount)
+        val newChunks = visualization.getSampleChunksFromAudio(buffer, channelCount, sampleCount)
         val chunkDuration =
             ((buffer.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
         var timeOfNextChunk = 0L

@@ -2,6 +2,7 @@ package com.paulingalls.realtimeaudio
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.media.AudioFormat
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +20,7 @@ class RealtimeAudioRecorderView(
     private val onAudioCaptured by EventDispatcher<Map<String, String>>()
     private val onCaptureComplete by EventDispatcher()
     private var audioRecorder: RealtimeAudioRecorder? = null
-    private var visualization: AudioVisualization = WaveformVisualization()
+    private var visualization: AudioVisualization = LinearWaveformVisualizer()
     private var audioChunks: ArrayList<FloatArray> = ArrayList()
     private val handler = Handler(Looper.getMainLooper())
     private var isRecording = false
@@ -27,9 +28,11 @@ class RealtimeAudioRecorderView(
     private var channelCount: Int = 1
     private var sampleRate: Int = 0
     private var audioFormat: Int = 0
+    private var mainColor: Int = Color.BLUE
 
     init {
         setWillNotDraw(false)
+        visualization.setColor(mainColor)
     }
 
     fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
@@ -44,7 +47,14 @@ class RealtimeAudioRecorderView(
     }
 
     fun setVisualizationColor(color: Int) {
+        mainColor = color
         visualization.setColor(color)
+        invalidate()
+    }
+
+    fun setVisualizer(visualization: BaseVisualization) {
+        this.visualization = visualization
+        this.visualization.setColor(mainColor)
         invalidate()
     }
 
@@ -72,7 +82,7 @@ class RealtimeAudioRecorderView(
             floatArray = convertByteArrayToFloatArray(buffer)
         }
         val sampleCount = width / 2
-        val newChunks = visualization.getSamplesFromAudio(floatArray, channelCount, sampleCount)
+        val newChunks = visualization.getSampleChunksFromAudio(floatArray, channelCount, sampleCount)
         val chunkDuration =
             ((floatArray.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
         var timeOfNextChunk = 0L

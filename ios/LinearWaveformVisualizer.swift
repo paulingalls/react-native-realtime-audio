@@ -1,6 +1,6 @@
 import AVFoundation
 
-class WaveformVisualization: AudioVisualization {
+class LinearWaveformVisualizer: AudioVisualization {
   private let waveformLayer = CAShapeLayer()
   
   var layer: CALayer {

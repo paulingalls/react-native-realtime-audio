@@ -56,7 +56,20 @@ public class RealtimeAudioVADRecorderModule: Module, RealtimeAudioVADRecorderDel
           channels: format.channelCount
         )
       }
-      
+
+      Prop("visualizer") { (
+        view: RealtimeAudioVADRecorderView,
+        visualizer: String
+      ) in
+        if visualizer == "linearWaveform" {
+          view.setVisualization(LinearWaveformVisualizer())
+        } else if visualizer == "circularWaveform" {
+          view.setVisualization(CircularWaveformVisualizer())
+        } else if visualizer == "tripleCircle" {
+          view.setVisualization(TripleCircleVisualizer())
+        }
+      }
+
       Prop("echoCancellationEnabled") { (
         view: RealtimeAudioVADRecorderView,
         enabled: Bool

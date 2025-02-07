@@ -55,6 +55,20 @@ class RealtimeAudioVADRecorderModule : Module() {
                 view.setVisualizationColor(getAndroidColor(hexColor))
             }
 
+            Prop("visualizer") { view: RealtimeAudioVADRecorderView, visualizer: String ->
+                when (visualizer) {
+                    "linearWaveform" -> {
+                        view.setVisualizer(LinearWaveformVisualizer())
+                    }
+                    "circularWaveform" -> {
+                        view.setVisualizer(CircularWaveformVisualizer())
+                    }
+                    "tripleCircle" -> {
+                        view.setVisualizer(TripleCircleVisualizer())
+                    }
+                }
+            }
+
             Prop("echoCancellationEnabled") { view: RealtimeAudioVADRecorderView, echoCancellationEnabled: Boolean ->
                 view.setEchoCancellationEnabled(echoCancellationEnabled)
             }

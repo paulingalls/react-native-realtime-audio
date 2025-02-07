@@ -49,6 +49,20 @@ class RealtimeAudioRecorderModule : Module() {
                 view.setVisualizationColor(getAndroidColor(hexColor))
             }
 
+            Prop("visualizer") { view: RealtimeAudioRecorderView, visualizer: String ->
+                when (visualizer) {
+                    "linearWaveform" -> {
+                        view.setVisualizer(LinearWaveformVisualizer())
+                    }
+                    "circularWaveform" -> {
+                        view.setVisualizer(CircularWaveformVisualizer())
+                    }
+                    "tripleCircle" -> {
+                        view.setVisualizer(TripleCircleVisualizer())
+                    }
+                }
+            }
+
             Prop("echoCancellationEnabled") { view: RealtimeAudioRecorderView, echoCancellationEnabled: Boolean ->
                 view.setEchoCancellationEnabled(echoCancellationEnabled)
             }

@@ -5,7 +5,8 @@ import {
   RealtimeAudioPlayer,
   RealtimeAudioPlayerModule,
   RealtimeAudioPlayerView,
-  RealtimeAudioPlayerViewRef
+  RealtimeAudioPlayerViewRef,
+  Visualizers
 } from "react-native-realtime-audio";
 import { Group } from "../../components/group";
 import { useEffect, useRef, useState } from "react";
@@ -137,7 +138,8 @@ export default function Tab() {
           </View>
           <RealtimeAudioPlayerView
             ref={audioViewRef}
-            waveformColor={"#2f93ff"}
+            waveformColor= {"#2f93ff"}
+            visualizer={Visualizers.tripleCircle}
             audioFormat={{
               sampleRate: 24000,
               encoding: AudioEncoding.pcm16bitInteger,
@@ -169,11 +171,11 @@ const styles = StyleSheet.create({
   view: {
     flex: 1,
     marginTop: 10,
-    height: 100,
+    height: 300,
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 5,
     borderStyle: "solid",
-    backgroundColor: "#eee"
+    backgroundColor: "#0e2655"
   }
 });

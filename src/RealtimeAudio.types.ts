@@ -43,6 +43,12 @@ export enum AudioEncoding {
   pcm32bitFloat = "pcm32bitFloat",
 }
 
+export enum Visualizers {
+  linearWaveform = "linearWaveform",
+  circularWaveform = "circularWaveform",
+  tripleCircle = "tripleCircle",
+}
+
 export type AudioFormat = {
   sampleRate: number;
   encoding: AudioEncoding;
@@ -53,6 +59,7 @@ export type RealtimeAudioPlayerViewProps = {
   audioFormat: AudioFormat;
   ref?: Ref<RealtimeAudioPlayerViewRef>;
   waveformColor?: string;
+  visualizer?: Visualizers;
   onPlaybackStarted?: () => void;
   onPlaybackStopped?: () => void;
 } & ViewProps;
@@ -61,6 +68,7 @@ export type RealtimeAudioRecorderViewProps = {
   audioFormat: AudioFormat;
   ref?: Ref<RealtimeAudioRecorderViewRef>;
   waveformColor?: string;
+  visualizer?: Visualizers;
   echoCancellationEnabled?: boolean;
   onAudioCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
   onCaptureComplete?: () => void;
@@ -70,6 +78,7 @@ export type RealtimeAudioVADRecorderViewProps = {
   audioFormat: AudioFormat;
   ref?: Ref<RealtimeAudioVADRecorderViewRef>;
   waveformColor?: string;
+  visualizer?: Visualizers;
   echoCancellationEnabled?: boolean;
   onVoiceCaptured?: (event: { nativeEvent: RealtimeAudioCapturedEventPayload }) => void;
   onVoiceStarted?: () => void;

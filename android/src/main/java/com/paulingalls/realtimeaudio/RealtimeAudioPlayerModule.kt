@@ -56,6 +56,20 @@ class RealtimeAudioPlayerModule : Module() {
                 view.setVisualizationColor(getAndroidColor(hexColor))
             }
 
+            Prop("visualizer") { view: RealtimeAudioPlayerView, visualizer: String ->
+                when (visualizer) {
+                    "linearWaveform" -> {
+                        view.setVisualizer(LinearWaveformVisualizer())
+                    }
+                    "circularWaveform" -> {
+                        view.setVisualizer(CircularWaveformVisualizer())
+                    }
+                    "tripleCircle" -> {
+                        view.setVisualizer(TripleCircleVisualizer())
+                    }
+                }
+            }
+
             Prop("audioFormat") { view: RealtimeAudioPlayerView, format: AudioFormatSettings ->
                 view.setAudioFormat(
                     format.sampleRate,

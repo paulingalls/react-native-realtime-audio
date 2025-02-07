@@ -61,6 +61,19 @@ public class RealtimeAudioRecorderModule: Module, RealtimeAudioRecorderDelegate 
         )
       }
       
+      Prop("visualizer") { (
+        view: RealtimeAudioRecorderView,
+        visualizer: String
+      ) in
+        if visualizer == "linearWaveform" {
+          view.setVisualization(LinearWaveformVisualizer())
+        } else if visualizer == "circularWaveform" {
+          view.setVisualization(CircularWaveformVisualizer())
+        } else if visualizer == "tripleCircle" {
+          view.setVisualization(TripleCircleVisualizer())
+        }
+      }
+      
       Prop("echoCancellationEnabled") { (
         view: RealtimeAudioRecorderView,
         enabled: Bool

@@ -59,6 +59,19 @@ public class RealtimeAudioPlayerModule:
         view.setWaveformColor(hexColor)
       }
       
+      Prop("visualizer") { (
+        view: RealtimeAudioPlayerView,
+        visualizer: String
+      ) in
+        if visualizer == "linearWaveform" {
+          view.setVisualization(LinearWaveformVisualizer())
+        } else if visualizer == "circularWaveform" {
+          view.setVisualization(CircularWaveformVisualizer())
+        } else if visualizer == "tripleCircle" {
+          view.setVisualization(TripleCircleVisualizer())
+        }
+      }
+      
       Prop("audioFormat") { (
         view: RealtimeAudioPlayerView,
         format: AudioFormatSettings

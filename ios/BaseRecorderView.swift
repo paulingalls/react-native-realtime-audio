@@ -7,7 +7,7 @@ public class BaseRecorderView: ExpoView {
   var echoCancellationEnabled: Bool = false
 
   public required init(appContext: AppContext? = nil) {
-    self.visualization = WaveformVisualization()
+    self.visualization = LinearWaveformVisualizer()
     super.init(appContext: appContext)
     
     layer.addSublayer(visualization.layer)
@@ -20,6 +20,11 @@ public class BaseRecorderView: ExpoView {
   public override func layoutSubviews() {
     super.layoutSubviews()
     visualization.setFrame(bounds)
+  }
+  
+  func setVisualization(_ visualization: AudioVisualization) {
+    layer.replaceSublayer(self.visualization.layer, with: visualization.layer)
+    self.visualization = visualization
   }
 
   func setWaveformColor(_ hexColor: UIColor) {
