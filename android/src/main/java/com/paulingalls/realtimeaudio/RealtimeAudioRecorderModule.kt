@@ -51,6 +51,9 @@ class RealtimeAudioRecorderModule : Module() {
 
             Prop("visualizer") { view: RealtimeAudioRecorderView, visualizer: String ->
                 when (visualizer) {
+                    "barGraph" -> {
+                        view.setVisualizer(BarGraphVisualizer())
+                    }
                     "linearWaveform" -> {
                         view.setVisualizer(LinearWaveformVisualizer())
                     }

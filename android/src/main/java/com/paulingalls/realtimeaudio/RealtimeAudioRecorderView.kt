@@ -15,59 +15,36 @@ import expo.modules.kotlin.views.ExpoView
 class RealtimeAudioRecorderView(
     context: Context,
     appContext: AppContext
-) : ExpoView(context, appContext),
+) : BaseAudioView(context, appContext),
     RealtimeAudioBufferDelegate {
     private val onAudioCaptured by EventDispatcher<Map<String, String>>()
     private val onCaptureComplete by EventDispatcher()
     private var audioRecorder: RealtimeAudioRecorder? = null
-    private var visualization: AudioVisualization = LinearWaveformVisualizer()
-    private var audioChunks: ArrayList<FloatArray> = ArrayList()
-    private val handler = Handler(Looper.getMainLooper())
-    private var isRecording = false
     private var isEchoCancellationEnabled = false
-    private var channelCount: Int = 1
-    private var sampleRate: Int = 0
-    private var audioFormat: Int = 0
-    private var mainColor: Int = Color.BLUE
 
-    init {
-        setWillNotDraw(false)
-        visualization.setColor(mainColor)
-    }
-
-    fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
+    override fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
         audioRecorder?.release()
         audioRecorder = RealtimeAudioRecorder(sampleRate, channelConfig, audioFormat).apply {
             delegate = this@RealtimeAudioRecorderView
             isEchoCancellationEnabled = this@RealtimeAudioRecorderView.isEchoCancellationEnabled
         }
-        channelCount = channelConfig
-        this.sampleRate = sampleRate
-        this.audioFormat = audioFormat
+        super.setAudioFormat(sampleRate, channelConfig, audioFormat)
     }
 
-    fun setVisualizationColor(color: Int) {
-        mainColor = color
-        visualization.setColor(color)
-        invalidate()
-    }
-
-    fun setVisualizer(visualization: BaseVisualization) {
-        this.visualization = visualization
-        this.visualization.setColor(mainColor)
-        invalidate()
+    fun setEchoCancellationEnabled(echoCancellationEnabled: Boolean) {
+        isEchoCancellationEnabled = echoCancellationEnabled
+        audioRecorder?.isEchoCancellationEnabled = echoCancellationEnabled
     }
 
     fun startRecording() {
-        isRecording = true
+        running = true
         audioRecorder?.startRecording()
         postInvalidate()
     }
 
     fun stopRecording() {
-        isRecording = false
+        running = false
         audioRecorder?.stopRecording()
-        postInvalidate()
     }
 
     override fun audioStringReady(base64Audio: String) {
@@ -81,43 +58,22 @@ class RealtimeAudioRecorderView(
         } else {
             floatArray = convertByteArrayToFloatArray(buffer)
         }
-        val sampleCount = width / 2
-        val newChunks = visualization.getSampleChunksFromAudio(floatArray, channelCount, sampleCount)
-        val chunkDuration =
-            ((floatArray.size.toFloat() * 1000.0) / (sampleRate.toFloat() * newChunks.size.toFloat())).toLong()
-        var timeOfNextChunk = 0L
-        audioChunks.addAll(newChunks)
-        for (chunkIndex in 0 until newChunks.size) {
-            handler.postDelayed({
-                postInvalidateOnAnimation()
-            }, timeOfNextChunk)
-            timeOfNextChunk += chunkDuration
-        }
+        scheduleChunks(floatArray)
     }
 
     override fun captureComplete() {
-        visualization.updateData(FloatArray(0))
-        audioChunks.clear()
         onCaptureComplete(mapOf())
-    }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        if (isRecording && audioChunks.size > 0) {
-            val chunk = audioChunks.removeAt(0)
-            visualization.updateData(chunk)
-            visualization.draw(canvas, width.toFloat(), height.toFloat())
-        }
+        handler.postDelayed({
+            visualization.updateData(FloatArray(0))
+            audioChunks.clear()
+            chunkRenderTimeInMillis = 0
+            postInvalidate()
+        }, 300)
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         audioRecorder?.release()
     }
-
-    fun setEchoCancellationEnabled(echoCancellationEnabled: Boolean) {
-        isEchoCancellationEnabled = echoCancellationEnabled
-        audioRecorder?.isEchoCancellationEnabled = echoCancellationEnabled
-    }
-
 }

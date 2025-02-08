@@ -12,12 +12,7 @@ class CircularWaveformVisualizer : BaseVisualization() {
     private val path = Path()
     private var rotation: Float = 0f
     private var colorShift: Float = 0f
-    private var samples: FloatArray = floatArrayOf()
     private var hue: Float = 210f
-
-    override fun updateData(data: FloatArray) {
-        this.samples = data
-    }
 
     override fun draw(canvas: Canvas, width: Float, height: Float) {
         if (samples.isEmpty()) return

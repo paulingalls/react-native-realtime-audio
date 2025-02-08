@@ -44,6 +44,7 @@ export enum AudioEncoding {
 }
 
 export enum Visualizers {
+  barGraph = "barGraph",
   linearWaveform = "linearWaveform",
   circularWaveform = "circularWaveform",
   tripleCircle = "tripleCircle",

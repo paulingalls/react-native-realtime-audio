@@ -30,7 +30,7 @@ class RealtimeAudioPlayer(
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
             )
@@ -49,7 +49,7 @@ class RealtimeAudioPlayer(
     fun addBuffer(base64EncodedBuffer: String) {
         val decodedBuffer = Base64.decode(base64EncodedBuffer, Base64.DEFAULT)
         bufferQueue.offer(decodedBuffer)
-        if (!isPlaying && !isPaused && bufferQueue.size > 2) {
+        if (!isPlaying && !isPaused && bufferQueue.size > 4) {
             startPlayback()
         }
     }
@@ -63,6 +63,7 @@ class RealtimeAudioPlayer(
         delegate?.playbackStarted()
 
         playerThread = thread(start = true) {
+            var hasWaitedABitToSeeIfMoreBuffersComeSoon = false
             while (isPlaying) {
                 if (!isPaused) {
                     val buffer = bufferQueue.poll()
@@ -70,7 +71,12 @@ class RealtimeAudioPlayer(
                         delegate?.bufferReady(buffer)
                         audioTrack?.write(buffer, 0, buffer.size)
                     } else {
-                        isPlaying = false
+                        if (!hasWaitedABitToSeeIfMoreBuffersComeSoon) {
+                            Thread.sleep(300)
+                            hasWaitedABitToSeeIfMoreBuffersComeSoon = true
+                        } else {
+                            isPlaying = false
+                        }
                     }
                 } else {
                     Thread.sleep(100)

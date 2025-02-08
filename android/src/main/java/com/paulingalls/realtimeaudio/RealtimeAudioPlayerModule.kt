@@ -58,6 +58,9 @@ class RealtimeAudioPlayerModule : Module() {
 
             Prop("visualizer") { view: RealtimeAudioPlayerView, visualizer: String ->
                 when (visualizer) {
+                    "barGraph" -> {
+                        view.setVisualizer(BarGraphVisualizer())
+                    }
                     "linearWaveform" -> {
                         view.setVisualizer(LinearWaveformVisualizer())
                     }

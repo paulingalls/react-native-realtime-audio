@@ -51,6 +51,9 @@ class RealtimeAudioRecorder(
     }
 
     fun stopRecording() {
+        if (isRecording) {
+            delegate?.captureComplete()
+        }
         isRecording = false
         recordingJob?.cancel()
         audioRecord?.apply {
@@ -58,7 +61,6 @@ class RealtimeAudioRecorder(
             release()
         }
         audioRecord = null
-        delegate?.captureComplete()
     }
 
     @SuppressLint("MissingPermission")

@@ -2,7 +2,7 @@ import ExpoModulesCore
 import SwiftUI
 import AVFoundation
 
-public class RealtimeAudioVADRecorderView: BaseRecorderView {
+public class RealtimeAudioVADRecorderView: BaseAudioView {
   private var audioRecorder: RealtimeAudioVADRecorder?
   
   let onVoiceCaptured = EventDispatcher()

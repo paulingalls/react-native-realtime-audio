@@ -9,7 +9,6 @@ import kotlin.math.max
 class LinearWaveformVisualizer : BaseVisualization() {
     private val waveformPaint: Paint = Paint()
     private val waveformPath: Path = Path()
-    private var waveformData: FloatArray = FloatArray(0)
 
     init {
         waveformPaint.apply {
@@ -20,25 +19,21 @@ class LinearWaveformVisualizer : BaseVisualization() {
         }
     }
 
-    override fun updateData(data: FloatArray) {
-        waveformData = data
-    }
-
     override fun draw(canvas: Canvas, width: Float, height: Float) {
-        if (waveformData.isEmpty()) return
+        if (samples.isEmpty()) return
 
         val centerY = height / 2
         waveformPath.reset()
-        val step = max(1, waveformData.size / width.toInt())
+        val step = max(1, samples.size / width.toInt())
         var x = 0f
 
         waveformPath.moveTo(0f, centerY)
 
-        for (i in waveformData.indices step step) {
-            val sampleValue = waveformData[i]
+        for (i in samples.indices step step) {
+            val sampleValue = samples[i]
             val y = centerY + (sampleValue * height / 2)
             waveformPath.lineTo(x, y)
-            x += width / (waveformData.size / step)
+            x += width / (samples.size / step)
         }
 
         canvas.drawPath(waveformPath, waveformPaint)

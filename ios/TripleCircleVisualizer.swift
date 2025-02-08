@@ -1,46 +1,12 @@
 import UIKit
 import AVFoundation
 
-class TripleCircleVisualizer: AudioVisualization {
-  private(set) var layer: CALayer
-  private let shapeLayer = CAShapeLayer()
+class TripleCircleVisualizer: BaseVisualizer {
   private var rotation: CGFloat = 0
   private var colorShift: CGFloat = 0
-  private var mainColor: UIColor = UIColor(red: 17/255, green: 24/255, blue: 39/255, alpha: 1)
   private var hue: CGFloat = 210
   
-  init() {
-    self.layer = CALayer()
-    self.layer.addSublayer(shapeLayer)
-  }
-  
-  func getSamplesFromAudio(_ audio: AVAudioPCMBuffer) -> [[Float]] {
-    guard let channelData = audio.floatChannelData else { return [] }
-    let frameLength = Int(audio.frameLength)
-    
-    if audio.format.channelCount > 0 {
-      let channelSamples = Array(UnsafeBufferPointer(start: channelData[0], count: frameLength))
-      return breakIntoChunks(channelSamples, chunkSize: 800)
-    }
-    
-    return []
-  }
-  
-  private func breakIntoChunks(_ samples: [Float], chunkSize: Int) -> [[Float]] {
-    var chunks: [[Float]] = []
-    var currentIndex = 0
-    
-    while currentIndex < samples.count {
-      let endIndex = min(currentIndex + chunkSize, samples.count)
-      let chunk = Array(samples[currentIndex..<endIndex])
-      chunks.append(chunk)
-      currentIndex = endIndex
-    }
-    
-    return chunks
-  }
-  
-  func updateVisualization(with samples: [Float]) {
+  override func updateVisualization(with samples: [Float]) {
     guard let superlayer = layer.superlayer else { return }
     let width = superlayer.bounds.width
     let height = superlayer.bounds.height
@@ -130,16 +96,8 @@ class TripleCircleVisualizer: AudioVisualization {
     UIGraphicsEndImageContext()
   }
   
-  func setColor(_ color: UIColor) {
-    mainColor = color
+  override func setColor(_ color: UIColor) {
+    super.setColor(color)
     color.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
-  }
-  
-  func setFrame(_ frame: CGRect) {
-    layer.frame = frame
-  }
-  
-  func clearVisualization() {
-    shapeLayer.path = nil
   }
 }

@@ -13,13 +13,8 @@ import kotlin.math.sin
 class TripleCircleVisualizer : BaseVisualization() {
     private var rotation: Float = 0f
     private var colorShift: Float = 0f
-    private var samples: FloatArray = floatArrayOf()
     private var hue: Float = 210f
     private var mainColor: Int = Color.argb(255, 17, 24, 39)
-
-    override fun updateData(data: FloatArray) {
-        this.samples = data
-    }
 
     override fun draw(canvas: Canvas, width: Float, height: Float) {
         val bufferLength = samples.size
