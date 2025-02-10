@@ -1,32 +1,18 @@
 {
   "name": "react-native-realtime-audio",
-  "version": "1.1.0",
+  "version": "1.1.2",
+  "description": "Play audio buffers in realtime",
+  "homepage": "https://github.com/paulingalls/react-native-realtime-audio#readme",
   "author": "paulingalls <paulingalls@gmail.com> (https://github.com/paulingalls)",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/paulingalls/react-native-realtime-audio.git"
   },
-  "main": "build/index.js",
-  "devDependencies": {
-    "expo-module-scripts": "4.0.3",
-    "@types/react": "18.3.18"
-  },
-  "peerDependencies": {
-    "expo": "*",
-    "react": "*",
-    "react-native": "*",
-    "react-native-web": "*"
-  },
-  "peerDependenciesMeta": {
-    "react-native-web": {
-      "optional": true
-    }
-  },
   "bugs": {
     "url": "https://github.com/paulingalls/react-native-realtime-audio/issues"
   },
-  "description": "Play audio buffers in realtime",
-  "homepage": "https://github.com/paulingalls/react-native-realtime-audio#readme",
   "keywords": [
     "react-native",
     "expo",
@@ -49,5 +35,21 @@
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
-  "types": "build/index.d.ts"
+  "dependencies": {
+    "expo-module-scripts": "4.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.18"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-web": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native-web": {
+      "optional": true
+    }
+  }
 }
