@@ -6,20 +6,20 @@ class TripleCircleVisualizer: BaseVisualizer {
   private var colorShift: CGFloat = 0
   private var hue: CGFloat = 210
   
+  override func clearVisualization() {
+    super.clearVisualization()
+    shapeLayer.contents = nil
+  }
+  
   override func updateVisualization(with samples: [Float]) {
-    guard let superlayer = layer.superlayer else { return }
-    let width = superlayer.bounds.width
-    let height = superlayer.bounds.height
+    let width = shapeLayer.bounds.width
+    let height = shapeLayer.bounds.height
     
-    UIGraphicsBeginImageContext(superlayer.bounds.size)
+    UIGraphicsBeginImageContext(shapeLayer.bounds.size)
     guard let context = UIGraphicsGetCurrentContext() else {
       UIGraphicsEndImageContext()
       return
     }
-    
-    // Clear with fade effect
-    context.setFillColor(mainColor.withAlphaComponent(0.3).cgColor)
-    context.fill(CGRect(x: 0, y: 0, width: width, height: height))
     
     let centerX = width / 2
     let centerY = height / 2
@@ -80,7 +80,7 @@ class TripleCircleVisualizer: BaseVisualizer {
           }
       }
       context.setStrokeColor(waveform.color.cgColor)
-      context.setLineWidth(2)
+      context.setLineWidth(4)
       context.closePath()
       context.strokePath()
       
@@ -91,7 +91,7 @@ class TripleCircleVisualizer: BaseVisualizer {
     colorShift += 0.005
     
     if let cgImage = context.makeImage() {
-      layer.contents = cgImage
+      shapeLayer.contents = cgImage
     }
     UIGraphicsEndImageContext()
   }

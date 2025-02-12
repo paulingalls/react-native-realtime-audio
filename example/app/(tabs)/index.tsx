@@ -138,7 +138,7 @@ export default function Tab() {
           </View>
           <RealtimeAudioPlayerView
             ref={audioViewRef}
-            waveformColor= {"#2f93ff"}
+            waveformColor= {"#9ec7f4"}
             visualizer={Visualizers.tripleCircle}
             audioFormat={{
               sampleRate: 24000,
