@@ -1,16 +1,11 @@
 package com.paulingalls.realtimeaudio
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
 import android.media.AudioFormat
-import android.os.Handler
-import android.os.Looper
 import convertByteArrayOfShortsToFloatArray
 import convertByteArrayToFloatArray
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
-import expo.modules.kotlin.views.ExpoView
 
 class RealtimeAudioRecorderView(
     context: Context,

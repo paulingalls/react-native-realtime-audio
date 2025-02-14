@@ -3,16 +3,11 @@ package com.paulingalls.realtimeaudio
 import RealtimeAudioPlayer
 import RealtimeAudioPlayerDelegate
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
 import android.media.AudioFormat
-import android.os.Handler
-import android.os.Looper
 import convertByteArrayOfShortsToFloatArray
 import convertByteArrayToFloatArray
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
-import expo.modules.kotlin.views.ExpoView
 
 class RealtimeAudioPlayerView(
     context: Context, appContext: AppContext
@@ -71,10 +66,5 @@ class RealtimeAudioPlayerView(
             floatArray = convertByteArrayToFloatArray(buffer)
         }
         scheduleChunks(floatArray)
-    }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        audioPlayer?.release()
     }
 }

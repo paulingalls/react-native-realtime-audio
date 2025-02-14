@@ -16,6 +16,7 @@ import { streamCompletion } from "../../utils/oai";
 export default function Tab() {
   const audioViewRef = useRef<RealtimeAudioPlayerViewRef>(null);
   const playerRef = useRef<RealtimeAudioPlayer>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [transcript, setTranscript] = useState<string>("");
 
   useEventListener(RealtimeAudioPlayerModule, "onPlaybackStarted", () => {
@@ -27,6 +28,7 @@ export default function Tab() {
 
   const playAudio = async () => {
     console.log("Playing audio...");
+    setIsPlaying(true);
     setTranscript("");
     if (playerRef.current === null) {
       // @ts-ignore
@@ -43,7 +45,13 @@ export default function Tab() {
         setTranscript((prev) => prev + transcriptChunk);
       },
       (audioData) => {
-        playerRef.current?.addBuffer(audioData);
+        setIsPlaying((prev => {
+          if (prev) {
+            console.log('adding buffer to player');
+            playerRef.current?.addBuffer(audioData);
+          }
+          return prev;
+        }));
       }
     );
   };
@@ -51,6 +59,7 @@ export default function Tab() {
   const playAudioInView = async () => {
     console.log("Playing audio in view...");
     setTranscript("");
+    setIsPlaying(true);
     streamCompletion(
       "Who was responsible for the first Hello World program?",
       "You are an experienced programmer",
@@ -58,7 +67,13 @@ export default function Tab() {
         setTranscript((prev) => prev + transcriptChunk);
       },
       (audioData) => {
-        audioViewRef.current?.addBuffer(audioData);
+        setIsPlaying((prev) => {
+          if (prev) {
+            console.log('adding buffer to view');
+            audioViewRef.current?.addBuffer(audioData);
+          }
+          return prev;
+        });
       }
     );
   };
@@ -75,6 +90,7 @@ export default function Tab() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Playback Examples</Text>
+        <Text style={styles.playStatus}>{isPlaying ? "Playing" : "Stopped"}</Text>
         <Group name="RealtimeAudioPlayer">
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Button
@@ -101,6 +117,7 @@ export default function Tab() {
               title="Stop"
               onPress={() => {
                 console.log("Stopping playback...");
+                setIsPlaying(false);
                 playerRef.current?.stop();
               }}
             />
@@ -132,6 +149,7 @@ export default function Tab() {
               title="Stop"
               onPress={() => {
                 console.log("Stopping playback in view...");
+                setIsPlaying(false);
                 audioViewRef.current?.stop();
               }}
             />
@@ -145,8 +163,12 @@ export default function Tab() {
               encoding: AudioEncoding.pcm16bitInteger,
               channelCount: 1
             }}
-            onPlaybackStarted={() => console.log("RealtimeAudioView playback started callback")}
-            onPlaybackStopped={() => console.log("RealtimeAudioView playback stopped callback")}
+            onPlaybackStarted={() => {
+              console.log("RealtimeAudioView playback started callback");
+            }}
+            onPlaybackStopped={() => {
+              console.log("RealtimeAudioView playback stopped callback");
+            }}
             style={styles.view}
           />
         </Group>
@@ -161,6 +183,11 @@ export default function Tab() {
 const styles = StyleSheet.create({
   header: {
     fontSize: 30,
+    margin: 10,
+    textAlign: "center"
+  },
+  playStatus: {
+    fontSize: 20,
     margin: 10,
     textAlign: "center"
   },

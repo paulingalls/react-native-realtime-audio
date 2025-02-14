@@ -90,6 +90,7 @@ class RealtimeAudioPlayer(
         if (!isPlaying) return
         isPlaying = false
         isPaused = false
+        bufferQueue.clear()
         playerThread?.join()
         audioTrack?.stop()
         audioTrack?.flush()
@@ -110,6 +111,7 @@ class RealtimeAudioPlayer(
     }
 
     fun release() {
+        delegate = null
         stopPlayback()
         audioTrack?.release()
         audioTrack = null

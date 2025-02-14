@@ -1,13 +1,8 @@
 package com.paulingalls.realtimeaudio
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.os.Handler
-import android.os.Looper
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
-import expo.modules.kotlin.views.ExpoView
 
 class RealtimeAudioVADRecorderView(
     context: Context,
