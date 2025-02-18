@@ -5,6 +5,7 @@ import AVFoundation
 public class BaseAudioView: ExpoView {
   var visualization: AudioVisualization
   var echoCancellationEnabled: Bool = false
+  var isAttachedToWindow: Bool = false
   let visualizerQueue = DispatchQueue(label: "os.react-native-real-time-audio.visualization", qos: .userInteractive)
   
   public required init(appContext: AppContext? = nil) {
@@ -23,6 +24,15 @@ public class BaseAudioView: ExpoView {
     visualization.setFrame(bounds)
   }
   
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    if window != nil {
+      isAttachedToWindow = true
+    } else {
+      isAttachedToWindow = false
+    }
+  }
+  
   func setVisualization(_ visualization: AudioVisualization) {
     layer.replaceSublayer(self.visualization.layer, with: visualization.layer)
     self.visualization = visualization
@@ -33,6 +43,8 @@ public class BaseAudioView: ExpoView {
   }
   
   func updateVisualizationSamples(from buffer: AVAudioPCMBuffer) {
+    guard isAttachedToWindow else { return }
+    
     let samplePieces = visualization.getSamplesFromAudio(buffer)
     if samplePieces.isEmpty { return }
     

@@ -34,23 +34,6 @@ abstract class BaseVisualization : AudioVisualization {
             }
             samplePieces.add(pieceSamples.toFloatArray())
         }
-
-        if (frameLength % chunkSize != 0) {
-            val remainingSamples = mutableListOf<Float>()
-
-            val startIndex = pieceCount * chunkSize
-
-            for (i in startIndex until frameLength) {
-                var sample = 0f
-                for (channel in 0 until channelCount) {
-                    sample += buffer[i * channelCount + channel]
-                }
-                sample /= channelCount.toFloat()
-                remainingSamples.add(sample)
-            }
-            samplePieces.add(remainingSamples.toFloatArray())
-        }
-
         return samplePieces
     }
 

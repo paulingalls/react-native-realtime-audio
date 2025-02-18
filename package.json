@@ -1,6 +1,6 @@
 {
   "name": "react-native-realtime-audio",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Play audio buffers in realtime",
   "homepage": "https://github.com/paulingalls/react-native-realtime-audio#readme",
   "author": "paulingalls <paulingalls@gmail.com> (https://github.com/paulingalls)",

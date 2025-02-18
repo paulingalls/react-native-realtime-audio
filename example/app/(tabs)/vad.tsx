@@ -2,11 +2,13 @@ import { Button, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-
 import { Group } from "../../components/group";
 import { useEffect, useRef, useState } from "react";
 import {
-  AudioEncoding, RealtimeAudioCapturedEventPayload,
+  AudioEncoding,
+  RealtimeAudioCapturedEventPayload,
   RealtimeAudioPlayerView,
-  RealtimeAudioPlayerViewRef, RealtimeAudioRecorderView,
+  RealtimeAudioPlayerViewRef,
   RealtimeAudioVADRecorder,
-  RealtimeAudioVADRecorderModule, RealtimeAudioVADRecorderViewRef
+  RealtimeAudioVADRecorderModule,
+  RealtimeAudioVADRecorderViewRef
 } from "react-native-realtime-audio";
 import { useEvent, useEventListener } from "expo";
 import RealtimeAudioVADRecorderView from "react-native-realtime-audio/RealtimeAudioVADRecorderView";
@@ -122,6 +124,7 @@ export default function Tab() {
               }
             }}
             onVoiceEnded={() => {
+              console.log("RealtimeAudio VAD detected voice ended event");
               for (const buffer of recordedBuffers) {
                 audioViewRef.current?.addBuffer(buffer);
               }
@@ -129,6 +132,7 @@ export default function Tab() {
               setHasVoice(false);
             }}
             onVoiceStarted={() => {
+              console.log("RealtimeAudio VAD detected voice started event");
               audioViewRef.current?.stop();
               setHasVoice(true);
             }}

@@ -59,16 +59,18 @@ class RealtimeAudioRecorderView(
     override fun captureComplete() {
         onCaptureComplete(mapOf())
 
-        handler.postDelayed({
-            visualization.updateData(FloatArray(0))
-            audioChunks.clear()
-            chunkRenderTimeInMillis = 0
-            postInvalidate()
-        }, 300)
+        if (visible) {
+            handler.postDelayed({
+                visualization.updateData(FloatArray(0))
+                audioChunks.clear()
+                chunkRenderTimeInMillis = 0
+                postInvalidate()
+            }, 300)
+        }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        audioRecorder?.release()
+        stopRecording()
     }
 }

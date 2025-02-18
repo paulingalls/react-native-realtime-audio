@@ -16,6 +16,13 @@ public class RealtimeAudioPlayerView: BaseAudioView {
     fatalError("init(coder:) has not been implemented")
   }
   
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    if window == nil {
+      audioPlayer?.stop()
+    }
+  }
+  
   func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
     audioPlayer = RealtimeAudioPlayer(
       sampleRate: sampleRate,
@@ -26,6 +33,7 @@ public class RealtimeAudioPlayerView: BaseAudioView {
   }
   
   func addBuffer(_ base64String: String) {
+    guard isAttachedToWindow else { return }
     audioPlayer?.addBuffer(base64String)
   }
   

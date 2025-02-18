@@ -110,6 +110,7 @@ export default function Tab() {
               }
             }}
             onCaptureComplete={() => {
+              console.log("RealtimeAudioView capture complete");
               for (const buffer of recordedBuffers) {
                 audioViewRef.current?.addBuffer(buffer);
               }

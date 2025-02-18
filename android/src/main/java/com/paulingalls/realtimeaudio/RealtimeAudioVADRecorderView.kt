@@ -53,10 +53,9 @@ class RealtimeAudioVADRecorderView(
     }
 
     override fun voiceBufferReady(buffer: FloatArray) {
-        if (!voiceActive) {
-            return
+        if (voiceActive) {
+            scheduleChunks(buffer)
         }
-        scheduleChunks(buffer)
     }
 
     override fun voiceStarted() {
@@ -67,16 +66,18 @@ class RealtimeAudioVADRecorderView(
     override fun voiceStopped() {
         onVoiceEnded(mapOf())
         voiceActive = false
-        handler.postDelayed({
-            visualization.updateData(FloatArray(0))
-            audioChunks.clear()
-            chunkRenderTimeInMillis = 0
-            postInvalidate()
-        }, 300)
+        if (visible) {
+            handler.postDelayed({
+                visualization.updateData(FloatArray(0))
+                audioChunks.clear()
+                chunkRenderTimeInMillis = 0
+                postInvalidate()
+            }, 300)
+        }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        audioRecorder?.release()
+        stopListening()
     }
 }

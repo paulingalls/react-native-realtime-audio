@@ -15,6 +15,7 @@ open class BaseAudioView(
     context: Context, appContext: AppContext
 ) : ExpoView(context, appContext) {
     protected var running: Boolean = false
+    protected var visible: Boolean = false
     protected var visualization: AudioVisualization = BarGraphVisualizer()
     protected var audioChunks: ArrayList<FloatArray> = ArrayList()
     protected var audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
@@ -28,6 +29,16 @@ open class BaseAudioView(
     init {
         setWillNotDraw(false)
         visualization.setColor(mainColor)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        visible = true
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        visible = false
     }
 
     open fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
@@ -53,7 +64,7 @@ open class BaseAudioView(
     }
 
     fun scheduleChunks(samples: FloatArray) {
-        if (!running) {
+        if (!running || !visible) {
             return
         }
 
@@ -77,7 +88,7 @@ open class BaseAudioView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (running && audioChunks.size > 0) {
+        if (visible && running && audioChunks.size > 0) {
             val chunk = audioChunks.removeAt(0)
             visualization.updateData(chunk)
             visualization.draw(canvas, width.toFloat(), height.toFloat())

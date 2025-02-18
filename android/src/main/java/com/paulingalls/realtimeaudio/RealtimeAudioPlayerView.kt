@@ -26,7 +26,9 @@ class RealtimeAudioPlayerView(
     }
 
     fun addAudioBuffer(base64EncodedBuffer: String) {
-        audioPlayer?.addBuffer(base64EncodedBuffer)
+        if (visible) {
+            audioPlayer?.addBuffer(base64EncodedBuffer)
+        }
     }
 
     fun stopPlayback() {
@@ -50,12 +52,14 @@ class RealtimeAudioPlayerView(
     override fun playbackStopped() {
         running = false
         onPlaybackStopped(mapOf())
-        handler.postDelayed({
-            visualization.updateData(FloatArray(0))
-            audioChunks.clear()
-            chunkRenderTimeInMillis = 0
-            postInvalidate()
-        }, 300)
+        if (visible) {
+            handler.postDelayed({
+                visualization.updateData(FloatArray(0))
+                audioChunks.clear()
+                chunkRenderTimeInMillis = 0
+                postInvalidate()
+            }, 300)
+        }
     }
 
     override fun bufferReady(buffer: ByteArray) {
@@ -66,5 +70,10 @@ class RealtimeAudioPlayerView(
             floatArray = convertByteArrayToFloatArray(buffer)
         }
         scheduleChunks(floatArray)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        audioPlayer?.stopPlayback()
     }
 }

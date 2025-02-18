@@ -15,6 +15,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
   private let vad: VadIterator
   private var bufferCache: [AVAudioPCMBuffer] = []
   private var waitTimeout: Int = 26
+  private var voiceSpeaking: Bool = false
   
   weak var delegate: RealtimeAudioVADRecorderDelegate?
   public var echoCancellationEnabled: Bool = false
@@ -56,8 +57,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
   }
   
   func startListening() {
-    var voiceSpeaking: Bool = false
-    
+    voiceSpeaking = false
     let inputFormat = inputNode.outputFormat(forBus: 0)
     let voiceConverter = RealtimeAudioConverter(inputFormat: inputFormat,
                                                 outputFormat: outputFormat,
@@ -83,7 +83,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
           self.waitTimeout = 26
         }
         
-        if voiceSpeaking {
+        if self.voiceSpeaking {
           print("add voice buffer")
           self.delegate?.voiceBufferCaptured(buffer)
           voiceConverter.addBuffer(buffer)
@@ -113,7 +113,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
         let outputBuffer = vadConverter.getNextBuffer()
         print("got vad buffer")
         if outputBuffer == nil || outputBuffer!.frameLength < 512 {
-          if (!voiceSpeaking) {
+          if (!self.voiceSpeaking) {
             DispatchQueue.main.async {
               self.delegate?.voiceDidStop()
             }
@@ -129,8 +129,8 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
         data.append(outputBuffer!.floatChannelData![0], length: byteCount)
         let hasVoice = try! self.vad.predict(data: data)
         if hasVoice {
-          if !voiceSpeaking {
-            voiceSpeaking = true
+          if !self.voiceSpeaking {
+            self.voiceSpeaking = true
             self.bufferCache.forEach { buffer in
               voiceConverter.addBuffer(buffer)
             }
@@ -142,7 +142,7 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
             
             let recordingQueue = DispatchQueue(label: "os.react-native-real-time-audio.vadRecordingQueue")
             recordingQueue.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(200)) {
-              while voiceSpeaking {
+              while self.voiceSpeaking {
                 let _ = yield.wait(timeout: DispatchTime.now() + DispatchTimeInterval.milliseconds(100))
                 let outputBuffer = voiceConverter.getNextBuffer()
                 print("got voice buffer")
@@ -193,8 +193,8 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
             }
           }
         } else {
-          if voiceSpeaking {
-            voiceSpeaking = false
+          if self.voiceSpeaking {
+            self.voiceSpeaking = false
             voiceConverter.clear()
             DispatchQueue.main.async {
               self.delegate?.voiceDidStop()
@@ -204,10 +204,16 @@ class RealtimeAudioVADRecorder: SharedObject, @unchecked Sendable {
       }
     }
   }
-  
+
   func stopListening() {
     audioEngine.stop()
     inputNode.removeTap(onBus: 0)
+    if voiceSpeaking {
+      voiceSpeaking = false
+      DispatchQueue.main.async {
+        self.delegate?.voiceDidStop()
+      }
+    }
     audioEngine.reset()
     vad.resetState()
   }

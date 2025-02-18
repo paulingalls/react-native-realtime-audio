@@ -17,6 +17,13 @@ public class RealtimeAudioVADRecorderView: BaseAudioView {
     fatalError("init(coder:) has not been implemented")
   }
   
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    if window == nil {
+      audioRecorder?.stopListening()
+    }
+  }
+  
   func setAudioFormat(sampleRate: Double, commonFormat: AVAudioCommonFormat, channels: UInt32) {
     audioRecorder = RealtimeAudioVADRecorder(sampleRate: sampleRate, channelCount: channels, audioFormat: commonFormat)
     audioRecorder?.delegate = self
@@ -44,6 +51,7 @@ extension RealtimeAudioVADRecorderView: RealtimeAudioVADRecorderDelegate {
   }
   
   func voiceBufferCaptured(_ buffer: AVAudioPCMBuffer) {
+    guard isAttachedToWindow else { return }
     updateVisualizationSamples(from: buffer)
   }
   
