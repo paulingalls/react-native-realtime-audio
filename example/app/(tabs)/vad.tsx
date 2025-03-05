@@ -8,10 +8,10 @@ import {
   RealtimeAudioPlayerViewRef,
   RealtimeAudioVADRecorder,
   RealtimeAudioVADRecorderModule,
+  RealtimeAudioVADRecorderView,
   RealtimeAudioVADRecorderViewRef
 } from "react-native-realtime-audio";
 import { useEvent, useEventListener } from "expo";
-import RealtimeAudioVADRecorderView from "react-native-realtime-audio/RealtimeAudioVADRecorderView";
 
 export default function Tab() {
   const audioViewRef = useRef<RealtimeAudioPlayerViewRef>(null);
@@ -93,7 +93,7 @@ export default function Tab() {
               onPress={() => {
                 console.log("Starting listening in view...");
                 vadRecorderViewRef.current?.startListening();
-                setIsListening(true)
+                setIsListening(true);
               }}
             />
             <Button
@@ -101,7 +101,7 @@ export default function Tab() {
               onPress={() => {
                 console.log("Stopping listening in view...");
                 vadRecorderViewRef.current?.stopListening();
-                setIsListening(false)
+                setIsListening(false);
               }}
             />
           </View>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   voice: {
     textAlign: "center",
-    fontWeight: "bold",
+    fontWeight: "bold"
   },
   view: {
     flex: 1,

@@ -6,6 +6,7 @@ export { default as RealtimeAudioRecorderModule } from './RealtimeAudioRecorderM
 export { default as RealtimeAudioVADRecorderModule } from './RealtimeAudioVADRecorderModule';
 export { default as RealtimeAudioPlayerView } from './RealtimeAudioPlayerView';
 export { default as RealtimeAudioRecorderView } from './RealtimeAudioRecorderView';
+export { default as RealtimeAudioVADRecorderView } from './RealtimeAudioVADRecorderView';
 export * from './RealtimeAudio.types';
 export * from './RealtimeAudioPlayer';
 export * from './RealtimeAudioRecorder';
