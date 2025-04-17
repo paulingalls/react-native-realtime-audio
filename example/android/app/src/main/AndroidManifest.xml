@@ -27,6 +27,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.paulingalls.realtimeaudio.example"/>
+        <data android:scheme="RTAudio"/>
       </intent-filter>
     </activity>
   </application>

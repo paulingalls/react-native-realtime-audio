@@ -27,6 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>RTAudio</string>
           <string>com.paulingalls.realtimeaudio.example</string>
         </array>
       </dict>
