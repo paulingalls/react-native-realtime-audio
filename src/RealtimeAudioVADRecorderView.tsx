@@ -1,16 +1,8 @@
 import { requireNativeView } from "expo";
-import {
-  RealtimeAudioVADRecorderViewProps,
-  RealtimeAudioVADRecorderViewRef
-} from "./RealtimeAudio.types";
-import { ComponentType, forwardRef, Ref } from "react";
+import { ComponentType } from "react";
+import { RealtimeAudioVADRecorderViewProps } from "./RealtimeAudio.types";
 
-const NativeView: ComponentType<RealtimeAudioVADRecorderViewProps> =
+const RealtimeAudioVADRecorderView: ComponentType<RealtimeAudioVADRecorderViewProps> =
   requireNativeView("RealtimeAudioVADRecorder");
-
-const RealtimeAudioVADRecorderView =
-  forwardRef((props: RealtimeAudioVADRecorderViewProps, ref: Ref<RealtimeAudioVADRecorderViewRef>) => {
-    return <NativeView {...props} ref={ref} />;
-  });
 
 export default RealtimeAudioVADRecorderView;
