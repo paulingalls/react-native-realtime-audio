@@ -19,7 +19,7 @@ class RealtimeAudioVADRecorderView(
 
     override fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
         audioRecorder?.release()
-        audioRecorder = RealtimeAudioVADRecorder(sampleRate, channelConfig, audioFormat).apply {
+        audioRecorder = RealtimeAudioVADRecorder(context, sampleRate, channelConfig, audioFormat).apply {
             delegate = this@RealtimeAudioVADRecorderView
             isEchoCancellationEnabled = this@RealtimeAudioVADRecorderView.isEchoCancellationEnabled
             modelPath = this@RealtimeAudioVADRecorderView.modelPath

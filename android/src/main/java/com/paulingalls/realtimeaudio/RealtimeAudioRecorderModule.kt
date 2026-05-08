@@ -25,6 +25,7 @@ class RealtimeAudioRecorderModule : Module() {
         Class("RealtimeAudioRecorder", RealtimeAudioRecorder::class) {
             Constructor { format: AudioFormatSettings, echoCancellationEnabled: Boolean ->
                 return@Constructor RealtimeAudioRecorder(
+                    appContext.reactContext!!.applicationContext,
                     format.sampleRate,
                     mapChannelCountToInputFormat(format.channelCount),
                     mapAudioEncodingToFormat(format.encoding)

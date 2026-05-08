@@ -56,7 +56,10 @@ android {
   }
 
   dependencies {
-    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.20.0'
+    // 1.23.0+ ships libonnxruntime4j_jni.so with 16 KB-aligned LOAD segments,
+    // required for Google Play submissions targeting Android 15+ devices
+    // (microsoft/onnxruntime PR #24947, post-1.22 release).
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.24.1'
     implementation 'com.tagtraum:pcmsampledsp:0.9.5'
   }
 }
