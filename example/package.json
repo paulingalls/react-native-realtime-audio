@@ -15,13 +15,12 @@
     "expo-linking": "~55.0.15",
     "expo-router": "~55.0.14",
     "expo-status-bar": "~55.0.6",
-    "openai-react-native": "0.3.7",
+    "openai": "^6.37.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-native": "0.83.6",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
-    "react-native-sse": "1.2.1",
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
@@ -29,9 +28,6 @@
     "typescript": "~5.9.2"
   },
   "private": true,
-  "overrides": {
-    "expo-file-system": "~55.0.19"
-  },
   "expo": {
     "autolinking": {
       "nativeModulesDir": ".."
