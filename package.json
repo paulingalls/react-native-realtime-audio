@@ -36,10 +36,10 @@
     "open:android": "open -a \"Android Studio\" example/android"
   },
   "dependencies": {
-    "expo-module-scripts": "4.0.5"
+    "expo-module-scripts": "55.0.2"
   },
   "devDependencies": {
-    "@types/react": "18.3.18"
+    "@types/react": "~19.2.0"
   },
   "peerDependencies": {
     "expo": "*",
