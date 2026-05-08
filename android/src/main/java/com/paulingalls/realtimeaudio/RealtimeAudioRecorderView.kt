@@ -19,7 +19,7 @@ class RealtimeAudioRecorderView(
 
     override fun setAudioFormat(sampleRate: Int, channelConfig: Int, audioFormat: Int) {
         audioRecorder?.release()
-        audioRecorder = RealtimeAudioRecorder(sampleRate, channelConfig, audioFormat).apply {
+        audioRecorder = RealtimeAudioRecorder(context, sampleRate, channelConfig, audioFormat).apply {
             delegate = this@RealtimeAudioRecorderView
             isEchoCancellationEnabled = this@RealtimeAudioRecorderView.isEchoCancellationEnabled
         }

@@ -1,7 +1,9 @@
 package com.paulingalls.realtimeaudio
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Base64
@@ -32,6 +34,7 @@ private const val VAD_CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 private const val VAD_AUDIO_FORMAT = AudioFormat.ENCODING_PCM_FLOAT
 
 class RealtimeAudioVADRecorder(
+    context: Context,
     private val sampleRate: Int,
     private val channelConfig: Int,
     private val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
@@ -40,7 +43,12 @@ class RealtimeAudioVADRecorder(
     var isEchoCancellationEnabled = false
     var modelPath: String = ""
 
+    private val audioManager =
+        context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioRecord: AudioRecord? = null
+    private var currentAudioSource: Int = -1
+    private var savedAudioMode: Int = AudioManager.MODE_NORMAL
+    private var didChangeAudioMode = false
     private var isListening = false
     private var isSpeaking = false
     private var recordingJob: Job? = null
@@ -66,23 +74,24 @@ class RealtimeAudioVADRecorder(
                 throw Exception("Buffer size is too small")
             }
             initializeVAD()
-            initializeAudioRecord()
+            ensureAudioRecord()
+            beginCommunicationModeIfNeeded()
             audioRecord?.startRecording()
             isListening = true
             startRecordingJob()
         } catch (e: Exception) {
             print("error starting to record $e")
+            endCommunicationModeIfNeeded()
         }
     }
 
     fun stopListening() {
         isListening = false
         recordingJob?.cancel()
-        audioRecord?.apply {
-            stop()
-            release()
-        }
-        audioRecord = null
+        // Keep the AudioRecord alive between cycles — VOICE_COMMUNICATION re-init
+        // is the slowest part of restarting capture.
+        audioRecord?.stop()
+        endCommunicationModeIfNeeded()
         delegate?.voiceStopped()
     }
 
@@ -104,18 +113,37 @@ class RealtimeAudioVADRecorder(
     }
 
     @SuppressLint("MissingPermission")
-    private fun initializeAudioRecord() {
-        var source = MediaRecorder.AudioSource.MIC
-        if (isEchoCancellationEnabled) {
-            source = MediaRecorder.AudioSource.VOICE_COMMUNICATION
+    private fun ensureAudioRecord() {
+        val desiredSource = if (isEchoCancellationEnabled) {
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION
+        } else {
+            MediaRecorder.AudioSource.MIC
         }
+        if (audioRecord != null && currentAudioSource == desiredSource) {
+            return
+        }
+        audioRecord?.release()
         audioRecord = AudioRecord(
-            source,
+            desiredSource,
             VAD_SAMPLE_RATE,
             VAD_CHANNEL_CONFIG,
             VAD_AUDIO_FORMAT,
             bufferSize
         )
+        currentAudioSource = desiredSource
+    }
+
+    private fun beginCommunicationModeIfNeeded() {
+        if (!isEchoCancellationEnabled || didChangeAudioMode) return
+        savedAudioMode = audioManager.mode
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        didChangeAudioMode = true
+    }
+
+    private fun endCommunicationModeIfNeeded() {
+        if (!didChangeAudioMode) return
+        audioManager.mode = savedAudioMode
+        didChangeAudioMode = false
     }
 
     private fun startRecordingJob() {
@@ -177,6 +205,9 @@ class RealtimeAudioVADRecorder(
 
     fun release() {
         stopListening()
+        audioRecord?.release()
+        audioRecord = null
+        currentAudioSource = -1
         recordingScope.cancel()
     }
 }

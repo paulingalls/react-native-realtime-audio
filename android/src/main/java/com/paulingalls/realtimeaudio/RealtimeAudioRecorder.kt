@@ -1,7 +1,9 @@
 package com.paulingalls.realtimeaudio
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Base64
@@ -22,6 +24,7 @@ interface RealtimeAudioBufferDelegate {
 }
 
 class RealtimeAudioRecorder(
+    context: Context,
     private val sampleRate: Int,
     private val channelConfig: Int,
     private val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT
@@ -29,7 +32,12 @@ class RealtimeAudioRecorder(
     var delegate: RealtimeAudioBufferDelegate? = null
     var isEchoCancellationEnabled = false
 
+    private val audioManager =
+        context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioRecord: AudioRecord? = null
+    private var currentAudioSource: Int = -1
+    private var savedAudioMode: Int = AudioManager.MODE_NORMAL
+    private var didChangeAudioMode = false
     private var isRecording = false
     private var recordingJob: Job? = null
     private val recordingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -41,12 +49,14 @@ class RealtimeAudioRecorder(
         if (isRecording) return
 
         try {
-            initializeAudioRecord()
+            ensureAudioRecord()
+            beginCommunicationModeIfNeeded()
             audioRecord?.startRecording()
             isRecording = true
             startRecordingJob()
         } catch (e: Exception) {
             print("error starting to record $e")
+            endCommunicationModeIfNeeded()
         }
     }
 
@@ -56,26 +66,45 @@ class RealtimeAudioRecorder(
         }
         isRecording = false
         recordingJob?.cancel()
-        audioRecord?.apply {
-            stop()
-            release()
-        }
-        audioRecord = null
+        // Stop but keep the AudioRecord alive — re-creating an AudioRecord on the
+        // VOICE_COMMUNICATION source costs 100-300ms of dead time per cycle. release()
+        // happens in release().
+        audioRecord?.stop()
+        endCommunicationModeIfNeeded()
     }
 
     @SuppressLint("MissingPermission")
-    private fun initializeAudioRecord() {
-        var source = MediaRecorder.AudioSource.MIC
-        if (isEchoCancellationEnabled) {
-            source = MediaRecorder.AudioSource.VOICE_COMMUNICATION
+    private fun ensureAudioRecord() {
+        val desiredSource = if (isEchoCancellationEnabled) {
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION
+        } else {
+            MediaRecorder.AudioSource.MIC
         }
+        if (audioRecord != null && currentAudioSource == desiredSource) {
+            return
+        }
+        audioRecord?.release()
         audioRecord = AudioRecord(
-            source,
+            desiredSource,
             sampleRate,
             channelConfig,
             audioFormat,
             bufferSize
         )
+        currentAudioSource = desiredSource
+    }
+
+    private fun beginCommunicationModeIfNeeded() {
+        if (!isEchoCancellationEnabled || didChangeAudioMode) return
+        savedAudioMode = audioManager.mode
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        didChangeAudioMode = true
+    }
+
+    private fun endCommunicationModeIfNeeded() {
+        if (!didChangeAudioMode) return
+        audioManager.mode = savedAudioMode
+        didChangeAudioMode = false
     }
 
     private fun startRecordingJob() {
@@ -101,6 +130,9 @@ class RealtimeAudioRecorder(
 
     fun release() {
         stopRecording()
+        audioRecord?.release()
+        audioRecord = null
+        currentAudioSource = -1
         recordingScope.cancel()
     }
 }

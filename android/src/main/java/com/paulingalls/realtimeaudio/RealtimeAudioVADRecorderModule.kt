@@ -30,6 +30,7 @@ class RealtimeAudioVADRecorderModule : Module() {
         Class("RealtimeAudioVADRecorder", RealtimeAudioVADRecorder::class) {
             Constructor { format: AudioFormatSettings, echoCancellationEnabled: Boolean ->
                 return@Constructor RealtimeAudioVADRecorder(
+                    appContext.reactContext!!.applicationContext,
                     format.sampleRate,
                     mapChannelCountToInputFormat(format.channelCount),
                     mapAudioEncodingToFormat(format.encoding)

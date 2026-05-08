@@ -19,8 +19,8 @@ class RealtimeAudioPlayer(
 ) : SharedObject() {
     private var audioTrack: AudioTrack? = null
     private val bufferQueue = ConcurrentLinkedQueue<ByteArray>()
-    private var isPlaying = false
-    private var isPaused = false
+    @Volatile private var isPlaying = false
+    @Volatile private var isPaused = false
     private var playerThread: Thread? = null
 
     var delegate: RealtimeAudioPlayerDelegate? = null
@@ -29,8 +29,12 @@ class RealtimeAudioPlayer(
         val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
+                // USAGE_VOICE_COMMUNICATION (paired with the VOICE_COMMUNICATION recorder
+                // source and AudioManager.MODE_IN_COMMUNICATION) is what lets Android's
+                // hardware AEC link the playback and capture streams. USAGE_MEDIA breaks
+                // echo cancellation on speakerphone for AI voice loops.
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
             )
@@ -49,7 +53,7 @@ class RealtimeAudioPlayer(
     fun addBuffer(base64EncodedBuffer: String) {
         val decodedBuffer = Base64.decode(base64EncodedBuffer, Base64.DEFAULT)
         bufferQueue.offer(decodedBuffer)
-        if (!isPlaying && !isPaused && bufferQueue.size > 4) {
+        if (!isPlaying && !isPaused && bufferQueue.isNotEmpty()) {
             startPlayback()
         }
     }
@@ -64,23 +68,27 @@ class RealtimeAudioPlayer(
 
         playerThread = thread(start = true) {
             var hasWaitedABitToSeeIfMoreBuffersComeSoon = false
-            while (isPlaying) {
-                if (!isPaused) {
-                    val buffer = bufferQueue.poll()
-                    if (buffer != null) {
-                        delegate?.bufferReady(buffer)
-                        audioTrack?.write(buffer, 0, buffer.size)
-                    } else {
-                        if (!hasWaitedABitToSeeIfMoreBuffersComeSoon) {
-                            Thread.sleep(300)
-                            hasWaitedABitToSeeIfMoreBuffersComeSoon = true
+            try {
+                while (isPlaying) {
+                    if (!isPaused) {
+                        val buffer = bufferQueue.poll()
+                        if (buffer != null) {
+                            delegate?.bufferReady(buffer)
+                            audioTrack?.write(buffer, 0, buffer.size)
                         } else {
-                            isPlaying = false
+                            if (!hasWaitedABitToSeeIfMoreBuffersComeSoon) {
+                                Thread.sleep(300)
+                                hasWaitedABitToSeeIfMoreBuffersComeSoon = true
+                            } else {
+                                isPlaying = false
+                            }
                         }
+                    } else {
+                        Thread.sleep(100)
                     }
-                } else {
-                    Thread.sleep(100)
                 }
+            } catch (_: InterruptedException) {
+                // stopPlayback() interrupted us; fall through to playbackStopped().
             }
             delegate?.playbackStopped()
         }
@@ -91,9 +99,14 @@ class RealtimeAudioPlayer(
         isPlaying = false
         isPaused = false
         bufferQueue.clear()
-        playerThread?.join()
+        // Stop the AudioTrack first so any in-flight blocking write() returns,
+        // then interrupt to break out of the drain-wait Thread.sleep, then
+        // bounded join so a misbehaving thread can't hang the caller.
         audioTrack?.stop()
         audioTrack?.flush()
+        playerThread?.interrupt()
+        playerThread?.join(1000L)
+        playerThread = null
     }
 
     fun pausePlayback() {
