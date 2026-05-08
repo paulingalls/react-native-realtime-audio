@@ -36,7 +36,7 @@
     "open:android": "open -a \"Android Studio\" example/android"
   },
   "dependencies": {
-    "expo-module-scripts": "4.0.3"
+    "expo-module-scripts": "4.0.5"
   },
   "devDependencies": {
     "@types/react": "18.3.18"
