@@ -15,6 +15,7 @@
     "expo-linking": "~55.0.15",
     "expo-router": "~55.0.14",
     "expo-status-bar": "~55.0.6",
+    "expo-system-ui": "~55.0.17",
     "openai": "^6.37.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
